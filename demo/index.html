@@ -230,7 +230,7 @@ function renderOffice() {
   const pend = S.visits.filter((v) => v.status !== "done");
   const items = [["dashboard", "Dashboard", doneJobs.length, doneJobs.length > 0], ["leads", "Leads & calendar", 3], ["visits", "Site visits", pend.length], ["jobs", "Installations", S.jobs.filter((j) => j.status !== "closed").length], ["store", "Store", toOrder().length, toOrder().length > 0], ["money", "Money to collect", S.owing.length]];
   const menu = items.map(([k, label, n, red]) => `<button data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${label}${n ? `<span class="count ${red ? "red" : ""}">${n}</span>` : ""}</button>`).join("");
-  return head("Office · sitetofit.com/c/yourcompany") + `<div class="office"><nav class="menu" aria-label="Menu">${menu}</nav><div class="screen">${screens[S.screen]()}</div></div>`;
+  return head("Office · siteto.fit/c/yourcompany") + `<div class="office"><nav class="menu" aria-label="Menu">${menu}</nav><div class="screen">${screens[S.screen]()}</div></div>`;
 }
 
 const screens = {
