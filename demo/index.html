@@ -7,18 +7,18 @@
 /* Layout: a demo frame (guide + view switch) around the sample company's app; office view = menu + screen, phone view = one 390px phone. */
 :root{
   --bg:#eef0f2; --panel:#ffffff; --ink:#18212b; --muted:#5b6672; --line:#dde2e7; --soft:#f5f6f8;
-  --brand:#8a3b12; --brand-ink:#ffffff; --brand-soft:#fbeee6;
-  --guide:#1f3a5f; --guide-soft:#e6edf6;
+  --brand:#334155; --brand-ink:#ffffff; --brand-soft:#eef1f5;
+  --guide:#3a17c4; --guide-soft:#ece8ff;
   --ok:#166534; --ok-soft:#dcfce7; --warn:#9a3412; --warn-soft:#ffedd5; --info:#1e40af; --info-soft:#dbeafe; --bad:#991b1b; --bad-soft:#fee2e2;
   --display:"Archivo", "Helvetica Neue", Arial, sans-serif; --body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#12161b; --panel:#1b2128; --ink:#e7ebef; --muted:#9aa5b1; --line:#2c343d; --soft:#222a32;
-  --brand:#d9824f; --brand-ink:#1a0f08; --brand-soft:#3a2418; --guide:#8fb3e0; --guide-soft:#1d2a3a;
+  --brand:#a8b4c4; --brand-ink:#0f141a; --brand-soft:#262e38; --guide:#b8a6ff; --guide-soft:#2a2050;
   --ok:#86efac; --ok-soft:#14321f; --warn:#fdba74; --warn-soft:#3a2312; --info:#93c5fd; --info-soft:#172a45; --bad:#fca5a5; --bad-soft:#3b1717; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#12161b; --panel:#1b2128; --ink:#e7ebef; --muted:#9aa5b1; --line:#2c343d; --soft:#222a32;
-  --brand:#d9824f; --brand-ink:#1a0f08; --brand-soft:#3a2418; --guide:#8fb3e0; --guide-soft:#1d2a3a;
+  --brand:#a8b4c4; --brand-ink:#0f141a; --brand-soft:#262e38; --guide:#b8a6ff; --guide-soft:#2a2050;
   --ok:#86efac; --ok-soft:#14321f; --warn:#fdba74; --warn-soft:#3a2312; --info:#93c5fd; --info-soft:#172a45; --bad:#fca5a5; --bad-soft:#3b1717; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
