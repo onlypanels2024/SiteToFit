@@ -88,12 +88,12 @@ img{max-width:100%;height:auto;display:block}
 
 /* store */
 .store-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 56px;align-items:end}
-.store-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin-top:44px}
+.store-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:64px;margin-top:48px}
 .st{display:flex;flex-direction:column;gap:12px;min-width:0}
-.st .screen{aspect-ratio:16/11}
-.st .screen img{width:100%;height:100%;object-fit:cover;object-position:left top}
+.st .screen{max-width:100%}
+.st .screen img{width:100%;height:auto}
 .st h3{font-size:21px;margin-top:6px}
-.st p{color:var(--muted)}
+.st p{color:var(--muted);font-size:17px;max-width:65ch}
 .store-note{margin-top:32px;display:flex;gap:12px 24px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:18px 24px}
 .store-note b{font-family:var(--display)}
 .store-note span{color:var(--muted)}
@@ -153,7 +153,7 @@ footer b{color:var(--on-navy);font-family:var(--display)}
 @media (max-width:860px){
   .svc,.try,.store-intro{grid-template-columns:minmax(0,1fr)}
   .svc:nth-child(even) .svc-text{order:0}
-  .store-grid{grid-template-columns:minmax(0,1fr)}
+  
   .stage .phone{bottom:-80px;right:4px}
   .hero-foot{height:90px}
 }
@@ -290,19 +290,24 @@ footer b{color:var(--on-navy);font-family:var(--display)}
       </div>
       <div class="store-grid">
         <div class="st">
-          <div class="screen"><img src="img/store-in.webp" alt="Stock in screen for scanning new items into the store"></div>
           <h3>Stock in</h3>
           <p>Scan items in as they arrive. Appliances are scanned one by one by their serial barcode. For fixings like hinges, scan the box and type how many.</p>
+          <div class="screen"><img src="img/store-in.webp" alt="Stock in screen for scanning new items into the store"></div>
         </div>
         <div class="st">
-          <div class="screen"><img src="img/store-stock.webp" alt="Stock screen showing what's in the store, kept for jobs and available"></div>
+          <h3>Stock out</h3>
+          <p>Each job's materials wait in a delivery list by date and team. On the day, the store keeper scans every item out, and each serial number is linked to the client it went to.</p>
+          <div class="screen"><img src="img/store-out.webp" alt="Stock out screen with the day's deliveries waiting to be scanned out" width="1200" height="794"></div>
+        </div>
+        <div class="st">
           <h3>Stock</h3>
           <p>For every product: how many are in the store, how many are kept for jobs, and how many are free to use. Type or scan a serial number to see where it went.</p>
+          <div class="screen"><img src="img/store-stock.webp" alt="Stock screen showing what's in the store, kept for jobs and available"></div>
         </div>
         <div class="st">
-          <div class="screen"><img src="img/store-order.webp" alt="To order screen listing what to order to cover every booked job"></div>
           <h3>To order</h3>
           <p>What to order so every booked job is covered, and which job would be short without it. Items below your warning level are flagged too.</p>
+          <div class="screen"><img src="img/store-order.webp" alt="To order screen listing what to order to cover every booked job"></div>
         </div>
       </div>
       <div class="store-note"><b>Also in the Store</b><span>Stock take: scan every shelf and see what's missing. Notes for the store keeper.</span></div>
