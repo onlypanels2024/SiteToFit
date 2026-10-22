@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>SiteToFit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="SiteToFit: one app for companies that sell, measure and install. Leads, site visits, jobs, your store and stock, installer teams, proof photos and money to collect.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: navy hero with the real screens, then a numbered walk-through that follows one job from enquiry to payment (text beside its screen, sides alternating), a Store section, what else is included, benefits, comparison and contact. Deliberately light-only, matching the brochure. */
+:root{
+  color-scheme:light;
+  --navy:#1f3a5f; --navy-deep:#16304f; --navy-soft:#e6edf6;
+  --warm:#b5531c; --warm-dark:#9c4616; --warm-light:#f2a46f; --warm-soft:#fbeee6;
+  --ink:#18212b; --muted:#566270; --line:#dde2e7; --paper:#ffffff; --soft:#f4f6f8;
+  --on-navy:#ffffff; --on-navy-muted:#c9d6e6; --ok:#166534;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:3px solid var(--warm-light);outline-offset:3px;border-radius:6px}
+img{max-width:100%;height:auto;display:block}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band{padding-block:clamp(56px,8vw,96px)}
+.band.soft{background:var(--soft)}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--warm)}
+.h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.015em;margin-top:10px;max-width:24ch}
+.lead{font-size:18px;color:var(--muted);max-width:62ch;margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;font-size:16px;border:2px solid transparent;cursor:pointer;font-family:var(--body)}
+.btn.pri{background:var(--warm);color:var(--on-navy)}
+.btn.pri:hover{background:var(--warm-dark)}
+.btn.ghost{border-color:rgba(255,255,255,.45);color:var(--on-navy)}
+.btn.ghost:hover{background:rgba(255,255,255,.08)}
+
+/* header + hero */
+.hero{background:var(--navy);color:var(--on-navy);overflow:hidden}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px;text-decoration:none;color:var(--on-navy)}
+.mark{width:38px;height:38px;border-radius:10px;background:var(--warm);display:grid;place-items:center;flex-shrink:0}
+.brand span b{color:var(--warm-light);font-weight:800}
+.links{display:flex;gap:4px 22px;flex-wrap:wrap;align-items:center;font-weight:600;font-size:15px}
+.links a{text-decoration:none;color:var(--on-navy-muted);padding:6px 0}
+.links a:hover{color:var(--on-navy)}
+.links .btn{min-height:42px;padding:8px 16px;font-size:15px;color:var(--on-navy)}
+.hero-grid{padding-block:clamp(32px,6vw,72px) 0}
+.hero h1{font-size:clamp(40px,6.4vw,74px);letter-spacing:-.025em;max-width:13ch}
+.hero h1 span{color:var(--warm-light)}
+.hero .sub{font-size:clamp(18px,2vw,21px);color:var(--on-navy-muted);max-width:54ch;margin-top:22px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.trades{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px}
+.trades span{border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:5px 14px;font-size:14px;color:var(--navy-soft)}
+.stage{position:relative;margin-top:56px}
+.stage .office{width:min(100%,900px);border-radius:14px 14px 0 0;box-shadow:0 30px 60px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);border-bottom:0}
+.stage .phone{position:absolute;right:0;bottom:-120px;width:clamp(150px,24vw,270px);border-radius:28px;border:8px solid #0d1b2e;box-shadow:0 30px 60px rgba(0,0,0,.45);background:var(--paper)}
+.stage .phone img{border-radius:20px}
+.hero-foot{height:120px}
+
+/* step-by-step services */
+.journey{display:flex;flex-direction:column;gap:clamp(56px,8vw,88px);margin-top:56px}
+.svc{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px 56px;align-items:center}
+.svc:nth-child(even) .svc-text{order:2}
+.svc-text{display:flex;flex-direction:column;gap:14px;min-width:0}
+.svc-head{display:flex;align-items:center;gap:14px}
+.num{width:44px;height:44px;border-radius:99px;background:var(--navy);color:var(--on-navy);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.who{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.svc h3{font-size:clamp(23px,2.6vw,30px);letter-spacing:-.01em}
+.svc p{color:var(--muted);font-size:17px}
+.ticks{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ticks li{display:flex;gap:10px;align-items:flex-start}
+.ticks li::before{content:"";flex-shrink:0;width:18px;height:18px;margin-top:3px;border-radius:99px;background:var(--warm-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b5531c' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12l4 4 8-8'/%3E%3C/svg%3E") center/12px no-repeat}
+.svc-pic{min-width:0}
+.screen{border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(31,58,95,.12);background:var(--paper)}
+.panel{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:32px 24px 0;display:flex;justify-content:center;overflow:hidden;max-height:560px}
+.panel img{width:min(100%,340px);border-radius:16px 16px 0 0;box-shadow:0 16px 40px rgba(24,33,43,.18);border:1px solid var(--line);border-bottom:0}
+.panel.phone img{width:min(100%,290px);border:7px solid #0d1b2e;border-bottom:0;border-radius:30px 30px 0 0}
+.band.soft .panel{background:var(--paper)}
+
+/* store */
+.store-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 56px;align-items:end}
+.store-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin-top:44px}
+.st{display:flex;flex-direction:column;gap:12px;min-width:0}
+.st .screen{aspect-ratio:16/11}
+.st .screen img{width:100%;height:100%;object-fit:cover;object-position:left top}
+.st h3{font-size:21px;margin-top:6px}
+.st p{color:var(--muted)}
+.store-note{margin-top:32px;display:flex;gap:12px 24px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:18px 24px}
+.store-note b{font-family:var(--display)}
+.store-note span{color:var(--muted)}
+
+/* also included */
+.feat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 40px;margin-top:44px}
+.f{display:flex;gap:16px;align-items:flex-start;min-width:0}
+.f i{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--navy-soft);color:var(--navy);display:grid;place-items:center}
+.f b{display:block;font-family:var(--display);font-size:18px;margin-bottom:2px}
+.f span{color:var(--muted)}
+.pack{margin-top:44px;border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:24px 28px;display:flex;gap:16px 32px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pack div{max-width:64ch;min-width:0}
+.pack b{font-family:var(--display);font-size:20px}
+.pack p{color:var(--muted);margin-top:4px}
+.pack .tag{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);background:var(--navy-soft);padding:8px 14px;border-radius:99px;white-space:nowrap}
+
+/* benefits */
+.ben{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px 28px;margin-top:44px}
+.b{border-top:4px solid var(--warm);padding-top:14px;min-width:0}
+.b b{display:block;font-family:var(--display);font-size:19px;margin-bottom:6px}
+.b span{color:var(--muted);font-size:15.5px}
+
+/* comparison */
+.tblwrap{overflow-x:auto;margin-top:40px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+table{width:100%;border-collapse:collapse;min-width:680px;font-size:15.5px}
+th{text-align:left;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:16px 18px;border-bottom:1px solid var(--line);vertical-align:bottom}
+td{padding:16px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.us{background:var(--navy-soft);color:var(--navy)}
+td.us{font-weight:700}
+th.us{color:var(--navy);font-family:var(--display);font-size:16px;letter-spacing:0;text-transform:none}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* try it */
+.try{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:32px;margin-top:44px;align-items:start}
+.card{border:1px solid var(--line);border-radius:16px;padding:28px;background:var(--paper);display:flex;flex-direction:column;gap:16px;min-width:0}
+.card h3{font-size:22px}
+.card .demo-img{border-radius:10px;border:1px solid var(--line);overflow:hidden}
+.side{display:flex;flex-direction:column;gap:24px;min-width:0}
+.list{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.person{font-family:var(--display);font-size:24px;font-weight:700;color:var(--navy)}
+.line-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.line-item strong{font-family:var(--display);font-size:20px;color:var(--navy);font-variant-numeric:tabular-nums;user-select:all;overflow-wrap:anywhere}
+.line-item small{color:var(--muted);font-weight:600}
+.copy{border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:8px;padding:6px 12px;font-weight:600;font-size:14px;cursor:pointer;min-height:36px;font-family:var(--body)}
+.status{color:var(--ok);font-size:14px;min-height:20px}
+
+footer{background:var(--navy-deep);color:var(--on-navy-muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;padding-block:28px}
+footer b{color:var(--on-navy);font-family:var(--display)}
+
+@media (max-width:960px){
+  .ben{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .feat{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .svc,.try,.store-intro{grid-template-columns:minmax(0,1fr)}
+  .svc:nth-child(even) .svc-text{order:0}
+  .store-grid{grid-template-columns:minmax(0,1fr)}
+  .stage .phone{bottom:-80px;right:4px}
+  .hero-foot{height:90px}
+}
+@media (max-width:560px){
+  .links a:not(.btn){display:none}
+  .ben,.feat{grid-template-columns:minmax(0,1fr)}
+  .stage{margin-top:72px}
+  .stage .phone{border-width:5px;border-radius:20px}
+  .stage .phone img{border-radius:15px}
+  .panel{padding:22px 16px 0;max-height:440px}
+}
+</style>
+
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="#top" id="top"><span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span><span>SiteTo<b>Fit</b></span></a>
+      <div class="links">
+        <a href="#how">Step by step</a>
+        <a href="#store">The Store</a>
+        <a href="#included">Also included</a>
+        <a href="#why">Why us</a>
+        <a class="btn pri" href="#try">Try the demo</a>
+      </div>
+    </nav>
+    <div class="hero-grid">
+      <h1>From first visit to finished job. <span>One app.</span></h1>
+      <p class="sub">For companies that sell, measure and install. Your office, your salespeople, your store and your installer teams on the same page, on any phone or computer.</p>
+      <div class="cta">
+        <a class="btn pri" href="demo/">Open the live demo</a>
+        <a class="btn ghost" href="#how">See what you get, step by step</a>
+      </div>
+      <div class="trades" aria-label="Trades it works for"><span>Kitchens &amp; wardrobes</span><span>Aluminium &amp; windows</span><span>Air conditioning</span><span>Curtains &amp; blinds</span><span>CCTV &amp; alarms</span><span>Flooring</span><span>Solar</span></div>
+      <div class="stage">
+        <img class="office" src="img/jobs.webp" alt="The office screen: the installations calendar showing which team goes where this week" width="1400" height="836">
+        <div class="phone"><img src="img/phone.webp" alt="The installer's phone: today's job with the address, directions, materials and photo boxes" width="600" height="1477"></div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-foot" aria-hidden="true"></div>
+</header>
+
+<main>
+  <section class="band" id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="eyebrow">What you get, step by step</div>
+      <h2 class="h2" id="how-h">Follow one job from the first call to the money in the bank</h2>
+      <p class="lead">This is everything your subscription covers, in the order a job happens. Every step is a screen in the app, and everyone sees where each job stands: the office, the salespeople, the store and the team on site.</p>
+
+      <div class="journey">
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">1</span><span class="who">Office &amp; salespeople</span></div>
+            <h3>An enquiry comes in</h3>
+            <p>Every enquiry goes into one list with its next step: call back, send a quote or book a visit. Your salespeople get the same list on their phone.</p>
+            <ul class="ticks"><li>The next step and date on every enquiry</li><li>Reminders on the phone before each appointment</li><li>A sales app for your salespeople to log new sales and documents</li></ul>
+          </div>
+          <div class="svc-pic"><div class="screen"><img src="img/leads.webp" alt="Leads and calendar screen listing enquiries with their next step" width="1400" height="836"></div></div>
+        </article>
+
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">2</span><span class="who">Salesperson or office</span></div>
+            <h3>The site visit</h3>
+            <p>Book the visit, go and measure, then mark it done with your notes. Pending and done visits sit on one screen, so none are forgotten.</p>
+            <ul class="ticks"><li>Visit date and status for every client</li><li>Measurements and access notes saved to the client</li><li>Photos and drawings kept with the visit</li></ul>
+          </div>
+          <div class="svc-pic"><div class="screen"><img src="img/visits.webp" alt="Site visits screen with pending and done visits" width="1400" height="865"></div></div>
+        </article>
+
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">3</span><span class="who">Office</span></div>
+            <h3>Turn the visit into a job</h3>
+            <p>One tap creates the job. Pick the team, the date and the materials, and choose the items it needs from your store.</p>
+            <ul class="ticks"><li>See how many of each item are available as you choose</li><li>Store items are kept aside for this job the moment it's created</li><li>The job appears on the installations calendar and the team's phone</li></ul>
+          </div>
+          <div class="svc-pic"><div class="panel"><img src="img/newjob.webp" alt="New job form with team, date, materials and items from the store" width="640" height="775"></div></div>
+        </article>
+
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">4</span><span class="who">Store keeper</span></div>
+            <h3>The store gets the materials ready</h3>
+            <p>Your store keeper has their own app with the day's deliveries. They scan each item out as it leaves, so you always know what went to which client.</p>
+            <ul class="ticks"><li>A delivery list for each job, by date and team</li><li>Every item scanned out with a handheld scanner or the phone camera</li><li>Every serial number linked to the client, ready for warranty</li></ul>
+          </div>
+          <div class="svc-pic"><div class="screen"><img src="img/store-deliv.webp" alt="Store deliveries screen with jobs waiting to be scanned out" width="1400" height="836"></div></div>
+        </article>
+
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">5</span><span class="who">Installer team</span></div>
+            <h3>The team does the job on their phone</h3>
+            <p>Each team sees only its own jobs: the address with directions, the work to do, the materials and any note from the office. They take photos in the boxes you set, then press Job done.</p>
+            <ul class="ticks"><li>Photo boxes you choose for each type of work, with no limit on photos</li><li>A job can't be finished without photos</li><li>The office gets an alert when the job is done</li></ul>
+          </div>
+          <div class="svc-pic"><div class="panel phone"><img src="img/phone.webp" alt="The installer's job on a phone with directions, materials and photo boxes" width="600" height="1477"></div></div>
+        </article>
+
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">6</span><span class="who">Office</span></div>
+            <h3>You check the photos and close the job</h3>
+            <p>Open the alert and look at the photos of each stage. If you're happy, press Installed and the job is closed.</p>
+            <ul class="ticks"><li>Photos sorted by stage: before, during and finished</li><li>Download all the photos of a job in one file for warranty or disputes</li><li>Every installed job kept with its client</li></ul>
+          </div>
+          <div class="svc-pic"><div class="panel"><img src="img/check.webp" alt="Checking the photos of a finished job before pressing Installed" width="640" height="896"></div></div>
+        </article>
+
+        <article class="svc">
+          <div class="svc-text">
+            <div class="svc-head"><span class="num">7</span><span class="who">Office</span></div>
+            <h3>Collect the money</h3>
+            <p>Once the job is installed, the balance moves to Money to collect. You see who still owes you and how much, without digging through files.</p>
+            <ul class="ticks"><li>Every balance still owed, in one list</li><li>One tap sends a polite WhatsApp reminder</li><li>Your bank details included in the reminder</li></ul>
+          </div>
+          <div class="svc-pic"><div class="screen"><img src="img/money.webp" alt="Money to collect screen with balances still owed and WhatsApp reminder buttons" width="1400" height="836"></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band soft" id="store" aria-labelledby="store-h">
+    <div class="wrap">
+      <div class="store-intro">
+        <div>
+          <div class="eyebrow">The Store</div>
+          <h2 class="h2" id="store-h">Know what's in stock, what's kept for jobs and what to order</h2>
+        </div>
+        <p class="lead">Behind every job is your store. SiteToFit keeps it up to date as items come in and go out, so a team never turns up short.</p>
+      </div>
+      <div class="store-grid">
+        <div class="st">
+          <div class="screen"><img src="img/store-in.webp" alt="Stock in screen for scanning new items into the store"></div>
+          <h3>Stock in</h3>
+          <p>Scan items in as they arrive. Appliances are scanned one by one by their serial barcode. For fixings like hinges, scan the box and type how many.</p>
+        </div>
+        <div class="st">
+          <div class="screen"><img src="img/store-stock.webp" alt="Stock screen showing what's in the store, kept for jobs and available"></div>
+          <h3>Stock</h3>
+          <p>For every product: how many are in the store, how many are kept for jobs, and how many are free to use. Type or scan a serial number to see where it went.</p>
+        </div>
+        <div class="st">
+          <div class="screen"><img src="img/store-order.webp" alt="To order screen listing what to order to cover every booked job"></div>
+          <h3>To order</h3>
+          <p>What to order so every booked job is covered, and which job would be short without it. Items below your warning level are flagged too.</p>
+        </div>
+      </div>
+      <div class="store-note"><b>Also in the Store</b><span>Stock take: scan every shelf and see what's missing. Notes for the store keeper.</span></div>
+    </div>
+  </section>
+
+  <section class="band" id="included" aria-labelledby="inc-h">
+    <div class="wrap">
+      <div class="eyebrow">Also included</div>
+      <h2 class="h2" id="inc-h">Everything else your company runs on</h2>
+      <div class="feat">
+        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></i><div><b>Dashboard</b><span>Each morning: jobs today, visits to book, money to collect, and alerts for finished jobs.</span></div></div>
+        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg></i><div><b>Installations calendar</b><span>Which team goes where, today and this week. Jobs for any work, not only big projects.</span></div></div>
+        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-5.6"/></svg></i><div><b>Clients in one place</b><span>Phone, email, every visit, job, photo and payment, when a client calls.</span></div></div>
+        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></i><div><b>Targets &amp; monthly report</b><span>Sales per salesperson against target, and a one-page monthly PDF report.</span></div></div>
+        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2a2 2 0 0 0 0-4"/></svg></i><div><b>Your name, logo and colours</b><span>Your team and clients see your company, on your own page address.</span></div></div>
+        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="11" rx="1.5"/><rect x="16" y="9" width="6" height="11" rx="1.5"/><path d="M6 19h6"/></svg></i><div><b>Any phone or computer</b><span>Works in any phone browser or as an Android app. Nothing to install in the office.</span></div></div>
+      </div>
+      <div class="pack">
+        <div><b>Trade packs</b><p>Extra screens for a trade. The Solar pack adds REWS grants, Part B deadlines and reading grant offer letters. More packs as new trades join.</p></div>
+        <span class="tag">Pay only for what you use</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="band soft" aria-labelledby="ben-h">
+    <div class="wrap">
+      <div class="eyebrow">How it helps your company</div>
+      <h2 class="h2" id="ben-h">Fewer phone calls, fewer mistakes, faster payment</h2>
+      <div class="ben">
+        <div class="b"><b>Nothing falls through</b><span>Every visit and job has a status. You see what's pending without asking anyone.</span></div>
+        <div class="b"><b>Teams leave ready</b><span>The address, materials and site notes are on their phone before they set off.</span></div>
+        <div class="b"><b>Never short on site</b><span>Materials are kept aside when the job is booked, and you see what to order in time.</span></div>
+        <div class="b"><b>Every serial traced</b><span>Each appliance that leaves the store is linked to the client it went to.</span></div>
+        <div class="b"><b>Proof on every job</b><span>Photos of each stage, ready for warranty claims, disputes or your own checks.</span></div>
+        <div class="b"><b>Get paid sooner</b><span>Balances are listed when a job is installed, and a reminder is one tap away.</span></div>
+        <div class="b"><b>Less WhatsApp chaos</b><span>Job details stop living in group chats and personal phones.</span></div>
+        <div class="b"><b>Start in a day</b><span>We set up your job types and photo boxes for you, so your teams can start straight away.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="why" aria-labelledby="why-h">
+    <div class="wrap">
+      <div class="eyebrow">Why choose us</div>
+      <h2 class="h2" id="why-h">Built for how local installation companies actually work</h2>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th scope="col"><span class="vh">Feature</span></th><th scope="col">Excel, paper &amp; WhatsApp</th><th scope="col">Big international apps</th><th scope="col" class="us">SiteToFit</th></tr></thead>
+          <tbody>
+            <tr><td>Visit → job → installed in one flow</td><td>Spread over many places</td><td>Yes, often built for other trades</td><td class="us">Yes, made for sell-measure-install</td></tr>
+            <tr><td>App for installer teams with photo boxes</td><td>Photos lost in chats</td><td>Depends on the plan</td><td class="us">Included, no photo limit</td></tr>
+            <tr><td>Store, stock &amp; what to order</td><td>Counted by hand</td><td>Depends on the plan</td><td class="us">Included, linked to every job</td></tr>
+            <tr><td>Maltese numbers &amp; WhatsApp reminders</td><td>By hand</td><td>Not made for Malta</td><td class="us">Built in</td></tr>
+            <tr><td>Your logo and colours</td><td>–</td><td>Depends on the plan</td><td class="us">Included</td></tr>
+            <tr><td>Malta grant paperwork (Solar pack)</td><td>By hand</td><td>No</td><td class="us">Yes</td></tr>
+            <tr><td>Support</td><td>–</td><td>Overseas, by ticket</td><td class="us">Local, in Malta</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="band soft" id="try" aria-labelledby="try-h">
+    <div class="wrap">
+      <div class="eyebrow">Try it</div>
+      <h2 class="h2" id="try-h">See it for yourself, then tell us what you think</h2>
+      <p class="lead">We're looking for a few local companies to try it and help shape it. Open the demo, follow the steps, and answer three quick questions at the end.</p>
+      <div class="try">
+        <div class="card">
+          <h3>Open the demo</h3>
+          <p style="color:var(--muted)">A sample kitchen company with made-up clients. Switch between the office and the installer's phone, and follow a job from first visit to installed.</p>
+          <div class="demo-img"><img src="img/dashboard.webp" alt="The demo's office dashboard with an alert for a finished job" width="1400" height="836"></div>
+          <div><a class="btn pri" href="demo/">Open the live demo</a></div>
+        </div>
+        <div class="side">
+          <div class="card">
+            <h3>What you get as an early company</h3>
+            <ul class="list"><li>A free trial on your own page, with your logo</li><li>Your job types and photo boxes set up for you</li><li>A say in what we build next</li></ul>
+          </div>
+          <div class="card" id="contact">
+            <h3>Talk to us</h3>
+            <p style="color:var(--muted)">Ask for a demo at your office, or send your feedback.</p>
+            <div class="person">Gary Falzon</div>
+            <div class="line-item"><strong id="c-phone">7932 3756</strong><small>phone &amp; WhatsApp</small></div>
+            <div class="line-item"><strong id="c-email" style="font-size:17px">gary.falzon2104@gmail.com</strong><button class="copy" id="copy-email" type="button">Copy</button></div>
+            <div><a class="btn pri" href="https://wa.me/35679323756" target="_blank" rel="noopener">Message on WhatsApp</a></div>
+            <p class="status" id="copy-status" role="status"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><b>SiteToFit</b> · Made in Malta · © 2026</span>
+    <span>Screens show a sample company with made-up data</span>
+  </div>
+</footer>
+
+<script>
+document.getElementById('copy-email').addEventListener('click', function () {
+  var el = document.getElementById('c-email');
+  var status = document.getElementById('copy-status');
+  function selectIt() {
+    var r = document.createRange(); r.selectNodeContents(el);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    status.textContent = 'Email selected. Press Ctrl+C to copy it.';
+  }
+  try {
+    navigator.clipboard.writeText(el.textContent).then(function () { status.textContent = 'Email copied.'; }, selectIt);
+  } catch (e) { selectIt(); }
+});
+</script>
+
+</body>
+</html>

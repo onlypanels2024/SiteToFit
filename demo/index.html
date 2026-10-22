@@ -1,0 +1,480 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>SiteToFit demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: a demo frame (guide + view switch) around the sample company's app; office view = menu + screen, phone view = one 390px phone. */
+:root{
+  --bg:#eef0f2; --panel:#ffffff; --ink:#18212b; --muted:#5b6672; --line:#dde2e7; --soft:#f5f6f8;
+  --brand:#8a3b12; --brand-ink:#ffffff; --brand-soft:#fbeee6;
+  --guide:#1f3a5f; --guide-soft:#e6edf6;
+  --ok:#166534; --ok-soft:#dcfce7; --warn:#9a3412; --warn-soft:#ffedd5; --info:#1e40af; --info-soft:#dbeafe; --bad:#991b1b; --bad-soft:#fee2e2;
+  --display:"Archivo", "Helvetica Neue", Arial, sans-serif; --body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161b; --panel:#1b2128; --ink:#e7ebef; --muted:#9aa5b1; --line:#2c343d; --soft:#222a32;
+  --brand:#d9824f; --brand-ink:#1a0f08; --brand-soft:#3a2418; --guide:#8fb3e0; --guide-soft:#1d2a3a;
+  --ok:#86efac; --ok-soft:#14321f; --warn:#fdba74; --warn-soft:#3a2312; --info:#93c5fd; --info-soft:#172a45; --bad:#fca5a5; --bad-soft:#3b1717; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161b; --panel:#1b2128; --ink:#e7ebef; --muted:#9aa5b1; --line:#2c343d; --soft:#222a32;
+  --brand:#d9824f; --brand-ink:#1a0f08; --brand-soft:#3a2418; --guide:#8fb3e0; --guide-soft:#1d2a3a;
+  --ok:#86efac; --ok-soft:#14321f; --warn:#fdba74; --warn-soft:#3a2312; --info:#93c5fd; --info-soft:#172a45; --bad:#fca5a5; --bad-soft:#3b1717; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+button{font:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--guide);outline-offset:2px}
+.intro{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.intro h1{font-size:clamp(26px,4vw,36px);letter-spacing:-.01em}
+.intro p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--guide);background:var(--guide-soft);padding:4px 10px;border-radius:99px}
+.switch{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.switch button{border:0;background:transparent;color:var(--muted);font-weight:600;padding:9px 16px;border-radius:9px;min-height:44px}
+.switch button[aria-pressed="true"]{background:var(--guide);color:var(--panel)}
+.guide{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.guide-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.guide-head h2{font-size:17px}
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.step{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;background:var(--soft);text-align:left;color:var(--ink);min-height:44px}
+.step .n{flex-shrink:0;width:26px;height:26px;border-radius:99px;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--panel);border:1px solid var(--line);color:var(--muted)}
+.step b{display:block;font-size:14px}.step span{display:block;font-size:12.5px;color:var(--muted)}
+.step.now{border-color:var(--guide);background:var(--guide-soft)}.step.now .n{background:var(--guide);color:var(--panel);border-color:var(--guide)}
+.step.done .n{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.linkbtn{border:0;background:none;color:var(--guide);font-weight:600;text-decoration:underline;padding:6px 2px}
+/* the sample company's app */
+.app{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.apphead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.mark{width:40px;height:40px;border-radius:11px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;flex-shrink:0}
+.mark.logo{background:transparent;border:2px dashed var(--brand);color:var(--brand);font-size:9px;font-weight:700;text-align:center;line-height:1.05;text-transform:uppercase;letter-spacing:.04em}
+.apphead b{font-family:var(--display);font-size:20px;color:var(--brand)}
+.apphead small{display:block;color:var(--muted);font-size:12px}
+.office{display:flex;flex-wrap:wrap;min-height:560px}
+.menu{flex:0 0 220px;border-right:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--soft)}
+.menu button{display:flex;justify-content:space-between;align-items:center;border:0;background:transparent;color:var(--ink);text-align:left;padding:10px 12px;border-radius:9px;font-weight:500;min-height:44px}
+.menu button[aria-current="page"]{background:var(--brand);color:var(--brand-ink);font-weight:700}
+.count{font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.count.red{background:var(--bad);color:var(--panel);border-color:var(--bad)}
+.screen{flex:999 1 560px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.screen h2{font-size:21px}
+.sub{color:var(--muted);margin:0;font-size:14px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+.item.hl{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.name{font-weight:700;font-size:16px}
+.meta{color:var(--muted);font-size:13.5px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.p-todo{background:var(--warn-soft);color:var(--warn)}.p-booked{background:var(--info-soft);color:var(--info)}.p-ok{background:var(--ok-soft);color:var(--ok)}.p-bad{background:var(--bad-soft);color:var(--bad)}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:9px 14px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;gap:6px}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-height:44px}
+.alert{border:1px solid var(--brand);background:var(--brand-soft);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px 14px}.stat span{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}.stat b{font-family:var(--display);font-size:26px;font-variant-numeric:tabular-nums}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{border:1px solid var(--line);border-radius:9px;padding:6px;min-height:64px;font-size:12px;display:flex;flex-direction:column;gap:3px}
+.day b{font-size:12px;color:var(--muted)}.day.today{border-color:var(--brand)}.day i{font-style:normal;background:var(--brand-soft);color:var(--brand);border-radius:6px;padding:1px 5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:inline-flex;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;color:var(--muted);font-weight:600;padding:8px 12px;border-radius:8px;min-height:40px}
+.tabs button[aria-pressed="true"]{background:var(--panel);color:var(--ink)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{width:84px;height:64px;border-radius:8px;border:1px solid var(--line);object-fit:cover;background:var(--soft)}
+.sample{display:block;width:84px;height:64px;border-radius:8px;border:1px solid var(--line)}
+.money{font-family:var(--display);font-size:18px;font-variant-numeric:tabular-nums}
+/* phone */
+.phonewrap{display:flex;justify-content:center;padding:22px 12px;background:var(--soft)}
+.phone{width:100%;max-width:390px;border:10px solid var(--ink);border-radius:36px;background:var(--bg);overflow:hidden}
+.phone .apphead{background:var(--panel)}
+.pbody{padding:12px;display:flex;flex-direction:column;gap:12px;min-height:600px}
+.job{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.job.today{border-color:var(--brand)}
+.addr{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px}
+.blk b{display:block;font-size:12px;color:var(--muted)}.blk p{margin:1px 0 0;white-space:pre-line;font-size:14px}
+.box{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.box-head{display:flex;justify-content:space-between;align-items:center;gap:6px 8px;font-weight:600;font-size:14px;flex-wrap:wrap}
+.box-head .row{flex-wrap:nowrap}
+.addr a{text-decoration:none}
+.modal[hidden]{display:none}
+.modal{position:fixed;inset:0;background:rgba(10,14,20,.55);display:grid;place-items:center;padding:max(16px, env(safe-area-inset-left, 0px));z-index:20}
+.modal>div{background:var(--panel);color:var(--ink);border-radius:16px;padding:18px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:12px}
+.bubble{background:var(--ok-soft);color:var(--ink);border-radius:12px;padding:12px;font-size:14px;white-space:pre-line}
+.fb{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.fb h2{font-size:22px}
+.choices{display:flex;gap:8px;flex-wrap:wrap}
+.choices button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:8px 14px;font-weight:600;min-height:44px}
+.choices button[aria-pressed="true"]{background:var(--guide);border-color:var(--guide);color:var(--panel)}
+.fbgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.contact{font-weight:600;user-select:all}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.tbl th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}.tbl tr:last-child td{border-bottom:0}
+.scanrow{display:flex;gap:8px;flex-wrap:wrap}.scanrow input{flex:1;min-width:160px;font:inherit;font-family:ui-monospace,Menlo,monospace;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-height:44px}
+.chip{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:2px 9px;margin:2px 4px 2px 0}
+.msg-ok{color:var(--ok);font-size:13.5px;margin:0}.msg-bad{color:var(--bad);font-size:13.5px;margin:0}
+.qty{width:76px;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:38px}
+#m-body{display:flex;flex-direction:column;gap:10px}
+.scanline{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.sline{display:grid;grid-template-columns:1fr 76px 110px;gap:8px;align-items:center;font-size:14px}
+@media (max-width:980px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:760px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}.fbgrid{grid-template-columns:1fr}.menu{flex:1 1 100%;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;overflow-x:auto}.menu button{white-space:nowrap}.stats{grid-template-columns:1fr 1fr}}
+@media (max-width:440px){.hide-sm{display:none}.tbl th,.tbl td{padding:8px}.steps{grid-template-columns:1fr}.week{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (prefers-reduced-motion:no-preference){.item.hl{transition:box-shadow .3s}}
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <div>
+      <span class="tag">Interactive demo · sample company, made-up data</span>
+      <h1>See a job go from first visit to installed</h1>
+      <p>One app for companies that sell, measure and install: kitchens, aluminium, air conditioning, blinds, solar. This demo shows a kitchen company as an example, with made-up clients; your company would see its own name and logo. Try the five steps, then tell us what you think at the bottom.</p>
+    </div>
+    <div class="switch" role="group" aria-label="Choose a view">
+      <button id="v-office" aria-pressed="true">Office</button>
+      <button id="v-phone" aria-pressed="false">Installer's phone</button>
+    </div>
+  </div>
+
+  <section class="guide" aria-labelledby="g-h">
+    <div class="guide-head"><h2 id="g-h">Try it in 5 steps</h2><button class="linkbtn" id="reset">Start again</button></div>
+    <div class="steps" id="steps"></div>
+  </section>
+
+  <section class="app" aria-label="Sample company app" id="app"></section>
+
+  <section class="fb" aria-labelledby="fb-h" id="feedback">
+    <div>
+      <h2 id="fb-h">Would your company use this?</h2>
+      <p class="sub">Three quick questions. Your answers go straight to us, nothing is stored on this page.</p>
+    </div>
+    <div class="fbgrid">
+      <div class="field"><span>Would you use an app like this?</span><div class="choices" id="q1"></div></div>
+      <div class="field"><span>What would you pay per month for your whole team?</span><div class="choices" id="q2"></div></div>
+      <label class="field" for="fb-trade">Your company and trade<input id="fb-trade" placeholder="e.g. Borg Aluminium, windows and doors"></label>
+      <label class="field" for="fb-missing">What's missing, or what would you change?<textarea id="fb-missing" rows="3" placeholder="Anything at all"></textarea></label>
+    </div>
+    <div class="row">
+      <a class="btn pri" id="fb-wa" target="_blank" rel="noopener">Send my answers on WhatsApp</a>
+      <button class="btn" id="fb-copy">Copy my answers</button>
+      <span class="note" id="fb-copied" role="status"></span>
+    </div>
+    <p class="note">Or send them to <span class="contact" id="c-email"></span> · <span class="contact" id="c-phone"></span></p>
+  </section>
+</div>
+
+<div class="modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="m-h"><h3 id="m-h"></h3><div id="m-body"></div><div class="row" style="justify-content:flex-end"><button class="btn pri" id="m-close">Close</button></div></div></div>
+
+<script>
+/* Your details: shown in the feedback section. */
+const CONTACT = { product: "", name: "Gary Falzon", whatsapp: "35679323756", phone: "Gary Falzon · 7932 3756", email: "gary.falzon2104@gmail.com" };
+
+const D = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
+const iso = (d) => d.toISOString().slice(0, 10);
+const nice = (d) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const icon = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg>';
+const BOXES = ["Before (empty room)", "Units fitted", "Worktop & sink", "Finished kitchen"];
+
+function fresh() {
+  return {
+    view: "office", screen: "visits", jobTab: "calendar", storeTab: "deliv", stockFilter: "all", inItem: "hob", storeLog: [], scan: null,
+    stock: [
+      { id: "oven", name: "Built-in oven", kind: "unit", desc: "60 cm, stainless steel", serials: ["OV-2201", "OV-2202"], out: [] },
+      { id: "hob", name: "Induction hob", kind: "unit", desc: "4 zones, 60 cm", serials: ["HB-3301"], out: [] },
+      { id: "sink", name: "Sink + mixer set", kind: "unit", desc: "1.5 bowl, black mixer", serials: ["SK-0410", "SK-0411", "SK-0412"], out: [{ serial: "SK-0409", job: "Paul Zammit" }] },
+      { id: "hinge", name: "Soft-close hinges", kind: "bulk", unit: "pcs", desc: "Box of 50, shelf B2", onHand: 60, warn: 40 },
+      { id: "handle", name: "Bar handles 160 mm", kind: "bulk", unit: "pcs", desc: "Brushed steel", onHand: 24, warn: 20 },
+    ],
+    visits: [
+      { id: "v1", name: "Joe Grech", place: "Triq il-Kbira, Mosta", what: "Full kitchen", phone: "7912 3456", date: "", status: "pending", note: "" },
+      { id: "v2", name: "Kevin Borg", place: "Triq San Pawl, Naxxar", what: "Worktop replacement", phone: "9945 1120", date: iso(D(2)), status: "booked", note: "" },
+      { id: "v3", name: "Rita Spiteri", place: "Triq San Ġużepp, Rabat", what: "Wardrobe", phone: "7701 8834", date: iso(D(-3)), status: "done", note: "Wall 3.2 m, window on the left" },
+    ],
+    jobs: [
+      { id: "j1", name: "Mark Vella", place: "14, Triq il-Kappillan, Birkirkara", what: "Full kitchen, L-shape with island", team: "Team A", date: iso(D(0)), materials: "9 base units, 6 wall units, 1 tall\nQuartz worktop 3.6 m\nSink + mixer", note: "Parking in the side street", photos: {}, status: "todo", stock: [{ id: "oven", q: 1 }, { id: "hob", q: 1 }, { id: "sink", q: 1 }, { id: "hinge", q: 30 }, { id: "handle", q: 20 }] },
+      { id: "j2", name: "Rita Spiteri", place: "3, Triq San Ġużepp, Rabat", what: "Wardrobe, sliding doors", team: "Team B", date: iso(D(1)), materials: "2 carcasses 2.4 m\n3 sliding doors", note: "Site visit: wall 3.2 m, window on the left", photos: {}, status: "todo", stock: [{ id: "handle", q: 6 }] },
+    ],
+    owing: [
+      { name: "Paul Zammit", what: "Full kitchen", due: 1200, phone: "7955 2211" },
+      { name: "Maria Bonello", what: "Wardrobe", due: 450, phone: "9912 7788" },
+    ],
+    installedCount: 23, steps: [false, false, false, false, false], editing: null, q1: "", q2: "",
+  };
+}
+let S = fresh();
+
+function stepNow() { return S.steps.findIndex((x) => !x); }
+const STEPS = [
+  ["Do the site visit", "Office › Site visits: book Joe Grech, then mark the visit done.", () => go("office", "visits")],
+  ["Send a team", "Create a job for Joe: his materials are kept aside in the store.", () => go("office", "visits")],
+  ["Send the materials", "Office › Store: scan out today's delivery for Mark Vella, then look at To order.", () => { S.storeTab = "deliv"; go("office", "store"); }],
+  ["Finish the job on the phone", "Installer's phone: add photos, then press Job done.", () => go("phone")],
+  ["Check and close", "Office: open the alert, look at the photos, press Installed.", () => go("office", "dashboard")],
+];
+function go(view, screen) { S.view = view; if (screen) S.screen = screen; render(); document.getElementById("app").scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+function renderSteps() {
+  const now = stepNow();
+  document.getElementById("steps").innerHTML = STEPS.map((s, i) => `<button class="step ${S.steps[i] ? "done" : i === now ? "now" : ""}" data-step="${i}"><span class="n">${S.steps[i] ? "✓" : i + 1}</span><span><b>${s[0]}</b><span>${s[1]}</span></span></button>`).join("");
+}
+
+function head(sub) { return `<div class="apphead"><span class="mark logo">Your<br>logo</span><div><b>Your Company</b><small>${sub}</small></div></div>`; }
+
+function renderOffice() {
+  const doneJobs = S.jobs.filter((j) => j.status === "done");
+  const pend = S.visits.filter((v) => v.status !== "done");
+  const items = [["dashboard", "Dashboard", doneJobs.length, doneJobs.length > 0], ["leads", "Leads & calendar", 3], ["visits", "Site visits", pend.length], ["jobs", "Installations", S.jobs.filter((j) => j.status !== "closed").length], ["store", "Store", toOrder().length, toOrder().length > 0], ["money", "Money to collect", S.owing.length]];
+  const menu = items.map(([k, label, n, red]) => `<button data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${label}${n ? `<span class="count ${red ? "red" : ""}">${n}</span>` : ""}</button>`).join("");
+  return head("Office · sitetofit.com/c/yourcompany") + `<div class="office"><nav class="menu" aria-label="Menu">${menu}</nav><div class="screen">${screens[S.screen]()}</div></div>`;
+}
+
+const screens = {
+  dashboard() {
+    const done = S.jobs.filter((j) => j.status === "done");
+    const alert = done.map((j) => `<div class="alert"><div><b>Job done: ${esc(j.name)}</b><div class="meta">${esc(j.team)} sent ${countPhotos(j)} photo${countPhotos(j) === 1 ? "" : "s"}. Check them and close the job.</div></div><button class="btn pri" data-open-job="${j.id}">Check photos</button></div>`).join("");
+    return `<h2>Good morning</h2>${alert || '<p class="sub">No alerts right now. When a team finishes a job, it shows here.</p>'}
+      <div class="stats"><div class="stat"><span>Jobs today</span><b>${S.jobs.filter((j) => j.date === iso(D(0)) && j.status === "todo").length}</b></div><div class="stat"><span>Visits to book</span><b>${S.visits.filter((v) => v.status === "pending").length}</b></div><div class="stat"><span>To collect</span><b>€${S.owing.reduce((n, o) => n + o.due, 0).toLocaleString("en-GB")}</b></div></div>`;
+  },
+  leads() {
+    const L = [["Joe Grech", "Mosta · Full kitchen", "Quote sent · call back today 17:00", "p-booked"], ["Sarah Camilleri", "Sliema · Wardrobe", "New enquiry from Facebook", "p-todo"], ["Kevin Borg", "Naxxar · Worktop replacement", "Site visit " + nice(D(2)), "p-ok"]];
+    return `<h2>Leads & calendar</h2><p class="sub">Every enquiry with its next step. Salespeople get the same list on their phone, with reminders.</p><div class="list">${L.map((l) => `<div class="item"><div class="between"><div><div class="name">${l[0]}</div><div class="meta">${l[1]}</div></div><span class="pill ${l[3]}">${l[2]}</span></div></div>`).join("")}</div>`;
+  },
+  visits() {
+    const pend = S.visits.filter((v) => v.status !== "done"), done = S.visits.filter((v) => v.status === "done");
+    const card = (v) => {
+      const st = v.status === "done" ? `<span class="pill p-ok">Visit done</span>` : v.date ? `<span class="pill p-booked">Booked ${nice(new Date(v.date))}</span>` : `<span class="pill p-todo">To book</span>`;
+      let act = "";
+      if (v.status !== "done") {
+        act = S.editing === v.id
+          ? `<label class="field" for="note-${v.id}">Visit note (measurements, access…)<input id="note-${v.id}" value="Wall 4.1 m, water point moves 40 cm left"></label><div class="row"><button class="btn pri" data-visit-done="${v.id}">Save visit as done</button><button class="btn" data-cancel>Cancel</button></div>`
+          : `<div class="row"><label class="field" for="date-${v.id}" style="flex-direction:row;align-items:center;gap:8px">Visit date<input type="date" id="date-${v.id}" data-visit-date="${v.id}" value="${v.date}"></label><button class="btn pri" data-mark="${v.id}" ${v.date ? "" : "disabled"}>Mark visit done</button></div>`;
+      } else {
+        const hasJob = S.jobs.some((j) => j.fromVisit === v.id || j.name === v.name);
+        act = `<div class="meta">“${esc(v.note)}”</div>` + (hasJob ? `<span class="pill p-ok">Job created</span>` : `<div class="row"><button class="btn pri" data-make-job="${v.id}">Create job for a team</button></div>`);
+      }
+      return `<div class="item ${v.name === "Joe Grech" && !hasJobFor(v) ? "hl" : ""}"><div class="between"><div><div class="name">${esc(v.name)}</div><div class="meta">${esc(v.what)} · ${esc(v.place)} · ${esc(v.phone)}</div></div>${st}</div>${act}</div>`;
+    };
+    return `<h2>Site visits</h2><p class="sub">Book the visit, take notes and photos, mark it done. Then send a team.</p><h3 style="font-size:16px">Pending (${pend.length})</h3><div class="list">${pend.map(card).join("") || '<p class="sub">Nothing pending.</p>'}</div><h3 style="font-size:16px">Done (${done.length})</h3><div class="list">${done.map(card).join("")}</div>`;
+  },
+  jobs() {
+    const days = [...Array(7)].map((_, i) => D(i));
+    const week = days.map((d) => `<div class="day ${i0(d) ? "today" : ""}"><b>${nice(d)}</b>${S.jobs.filter((j) => j.date === iso(d) && j.status !== "closed").map((j) => `<i title="${esc(j.name)}">${esc(j.team)} · ${esc(j.name.split(" ")[0])}</i>`).join("")}</div>`).join("");
+    const tabs = [["calendar", "Calendar"], ["done", `Done - check photos (${S.jobs.filter((j) => j.status === "done").length})`], ["closed", `Installed (${S.installedCount + S.jobs.filter((j) => j.status === "closed").length})`]].map(([k, l]) => `<button data-jobtab="${k}" aria-pressed="${S.jobTab === k}">${l}</button>`).join("");
+    const list = S.jobs.filter((j) => (S.jobTab === "calendar" ? j.status === "todo" : S.jobTab === "done" ? j.status === "done" : j.status === "closed"));
+    const rows = list.map((j) => `<div class="item"><div class="between"><div><div class="name">${esc(j.name)}</div><div class="meta">${nice(new Date(j.date))} · ${esc(j.team)} · ${esc(j.place)}</div></div>${jobPill(j)}</div>${j.status === "done" ? `<button class="btn pri" data-open-job="${j.id}" style="align-self:flex-start">Check photos</button>` : ""}</div>`).join("");
+    return `<h2>Installations</h2><div class="tabs" role="group" aria-label="Installations view">${tabs}</div>${S.jobTab === "calendar" ? `<div class="week">${week}</div>` : ""}<div class="list">${rows || `<p class="sub">${S.jobTab === "closed" ? "23 earlier jobs installed." : "Nothing here yet."}</p>`}</div>`;
+  },
+  money() {
+    return `<h2>Money to collect</h2><p class="sub">Installed clients who still owe a balance. One tap sends a polite WhatsApp reminder with your bank details.</p><div class="list">${S.owing.map((o, i) => `<div class="item"><div class="between"><div><div class="name">${esc(o.name)}</div><div class="meta">${esc(o.what)} · installed</div></div><span class="money">€${o.due.toLocaleString("en-GB")}</span></div><button class="btn" data-remind="${i}" style="align-self:flex-start">WhatsApp reminder</button></div>`).join("")}</div>`;
+  },
+};
+const i0 = (d) => iso(d) === iso(D(0));
+/* ---- Store: products, what's kept for jobs, deliveries, to order ---- */
+const JOE_STOCK = [{ id: "oven", q: 1 }, { id: "hob", q: 1 }, { id: "sink", q: 1 }, { id: "hinge", q: 26 }, { id: "handle", q: 12 }];
+const item = (id) => S.stock.find((x) => x.id === id);
+const waitingJobs = () => S.jobs.filter((j) => !j.delivered && j.status !== "closed" && (j.stock || []).length).sort((a, b) => a.date.localeCompare(b.date));
+function sumStock() {
+  const out = {};
+  for (const it of S.stock) { const inS = it.kind === "unit" ? it.serials.length : it.onHand; out[it.id] = { inStore: inS, forJobs: 0 }; }
+  for (const j of waitingJobs()) for (const l of j.stock) out[l.id].forJobs += l.q;
+  for (const k in out) { out[k].available = out[k].inStore - out[k].forJobs; const it = item(k); out[k].low = it.warn != null && out[k].available <= it.warn; }
+  return out;
+}
+const toOrder = () => { const s = sumStock(); return S.stock.filter((it) => s[it.id].forJobs > s[it.id].inStore); };
+const unitOf = (it) => (it.kind === "bulk" ? " " + it.unit : "");
+screens.store = function () {
+  const s = sumStock(), w = waitingJobs(), o = toOrder();
+  const tabs = [["deliv", `Deliveries (${w.length})`], ["in", "Stock in"], ["stock", "Stock"], ["order", `To order (${o.length})`]].map(([k, l]) => `<button data-storetab="${k}" aria-pressed="${S.storeTab === k}">${l}</button>`).join("");
+  let body = "";
+  if (S.storeTab === "deliv") {
+    body = `<p class="sub">Jobs keep their materials aside from the moment they're created. On the day, the store keeper scans each item out: every serial number is linked to the client.</p><div class="list">${w.map((j) => `<div class="item ${j.name === "Mark Vella" && !S.steps[2] ? "hl" : ""}"><div class="between"><div><div class="name">${esc(j.name)}</div><div class="meta">${i0(new Date(j.date)) ? "Today · " : ""}${nice(new Date(j.date))} · ${esc(j.team)} · ${esc(j.place)}</div><div class="meta">${j.stock.map((l) => l.q + " × " + esc(item(l.id).name)).join(", ")}</div></div><button class="btn pri" data-scanout="${j.id}">Scan out</button></div></div>`).join("") || '<p class="sub">No deliveries waiting.</p>'}</div>${S.jobs.filter((j) => j.delivered).map((j) => `<div class="item"><div class="between"><div><div class="name">${esc(j.name)}</div><div class="meta">${j.delivered.serials.map((x) => `<span class="chip">${x}</span>`).join("") || "No serial numbers"}</div></div><span class="pill p-ok">Delivered</span></div></div>`).join("")}`;
+  } else if (S.storeTab === "in") {
+    const it = item(S.inItem);
+    body = `<p class="sub">Appliances are scanned one by one (each has its own serial barcode). Fixings like hinges: scan the box, type how many. A handheld scanner or the phone camera both work.</p>
+      <label class="field" for="in-item">Product<select id="in-item">${S.stock.map((x) => `<option value="${x.id}" ${x.id === S.inItem ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>
+      ${it.kind === "unit" ? `<div class="field"><span>Scan each unit's barcode</span><div class="scanrow"><input id="in-code" placeholder="Scan or type, then Enter" autocomplete="off"><button class="btn pri" data-in-add>Add</button><button class="btn" data-in-sample>Use a sample barcode</button></div></div>`
+        : `<div class="field"><span>How many ${it.unit}</span><div class="scanrow"><input id="in-qty" type="number" min="1" value="50"><button class="btn pri" data-in-bulk>Add to stock</button></div></div>`}
+      ${S.storeLog.length ? `<div class="item">${S.storeLog.map((x) => `<p class="${x.bad ? "msg-bad" : "msg-ok"}">${x.bad ? "✕" : "✓"} ${esc(x.t)}</p>`).join("")}</div>` : ""}`;
+  } else if (S.storeTab === "stock") {
+    const av = (it) => s[it.id].available > 0;
+    const shown = S.stock.filter((it) => S.stockFilter === "all" || (S.stockFilter === "yes" ? av(it) : !av(it)));
+    const f = [["all", "All", S.stock.length], ["yes", "Available", S.stock.filter(av).length], ["no", "Not available", S.stock.filter((x) => !av(x)).length]].map(([k, l, n]) => `<button data-stockfilter="${k}" aria-pressed="${S.stockFilter === k}">${l} (${n})</button>`).join("");
+    body = `<label class="field" for="st-q">Type or scan a serial number to see where it went<input id="st-q" placeholder="e.g. SK-0409" autocomplete="off"></label><p class="sub" id="st-hit" role="status"></p>
+      <div class="tabs" role="group" aria-label="Show">${f}</div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Product</th><th>In store</th><th class="hide-sm">For jobs</th><th>Available</th></tr></thead><tbody>${shown.map((it) => `<tr><td><b>${esc(it.name)}</b><div class="meta">${esc(it.desc)}${it.kind === "unit" ? " · serial numbers" : ""}</div></td><td>${s[it.id].inStore}${unitOf(it)}</td><td class="hide-sm">${s[it.id].forJobs || ""}</td><td><span class="pill ${s[it.id].available <= 0 ? "p-bad" : s[it.id].low ? "p-todo" : "p-ok"}">${s[it.id].available < 0 ? "Short " + (-s[it.id].available) : s[it.id].available}</span></td></tr>`).join("") || '<tr><td colspan="4" class="meta">Nothing here.</td></tr>'}</tbody></table></div>`;
+  } else {
+    const rows = o.map((it) => {
+      let left = s[it.id].inStore;
+      const js = w.filter((j) => j.stock.some((l) => l.id === it.id)).map((j) => { const q = j.stock.filter((l) => l.id === it.id).reduce((n, l) => n + l.q, 0); const c = Math.max(0, Math.min(q, left)); left -= c; return { j, q, short: q - c }; });
+      return `<div class="item"><div class="between"><div class="name">${esc(it.name)}</div><span class="pill p-bad">Order ${s[it.id].forJobs - s[it.id].inStore}${unitOf(it)}</span></div><div class="meta">Needed for jobs ${s[it.id].forJobs}${unitOf(it)} · in the store ${s[it.id].inStore}${unitOf(it)}</div>${js.map((x) => `<div class="between" style="border-top:1px dashed var(--line);padding-top:6px"><span>${nice(new Date(x.j.date))} · <b>${esc(x.j.name)}</b> <span class="meta">needs ${x.q}</span></span>${x.short ? `<span class="pill p-todo">Short ${x.short}</span>` : '<span class="pill p-ok">Covered</span>'}</div>`).join("")}</div>`;
+    }).join("");
+    const low = S.stock.filter((it) => s[it.id].low && !o.includes(it));
+    const waitN = new Set(w.filter((j) => j.stock.some((l) => o.some((it) => it.id === l.id))).map((j) => j.id)).size;
+    body = (o.length ? `<div class="alert"><b>Order these to close every job booked.</b></div>` : '<p class="sub">Nothing to order: the store has everything the booked jobs need.</p>') + `<div class="list">${rows}</div>` + (low.length ? `<div class="item"><div class="name">Also running low</div><div class="meta">Enough for the jobs booked, but below the warning level.</div>${low.map((it) => `<div class="between"><span>${esc(it.name)}</span><span class="pill p-todo">${s[it.id].available}${unitOf(it)} available · warn at ${it.warn}</span></div>`).join("")}</div>` : "");
+  }
+  return `<h2>Store</h2><p class="sub">Your store keeper gets this as their own app. The office sees what's in stock, what's kept for jobs and what to order.</p><div class="tabs" role="group" aria-label="Store">${tabs}</div>${body}<p class="note">Also in the app: stock take (scan every shelf, see what's missing) and notes for the store keeper.</p>`;
+};
+function scanBody() {
+  const sc = S.scan, j = S.jobs.find((x) => x.id === sc.jobId);
+  const lines = j.stock.map((l) => {
+    const it = item(l.id);
+    if (it.kind === "bulk") return `<div class="between scanline"><span>${esc(it.name)}</span><span class="pill p-ok">${l.q} ${it.unit} going out</span></div>`;
+    const got = sc.picked.filter((p) => p.id === l.id);
+    return `<div class="scanline"><div class="between"><span>${esc(it.name)}</span><span class="pill ${got.length >= l.q ? "p-ok" : "p-todo"}">${got.length} of ${l.q} scanned</span></div>${got.map((p) => `<span class="chip">${p.serial}</span>`).join("")}</div>`;
+  }).join("");
+  const done = j.stock.every((l) => item(l.id).kind === "bulk" || sc.picked.filter((p) => p.id === l.id).length >= l.q);
+  document.getElementById("m-body").innerHTML = `<p class="sub">${esc(j.team)} · ${esc(j.place)}</p><div class="scanrow"><input id="sc-code" placeholder="Scan or type, then Enter" autocomplete="off" aria-label="Barcode"><button class="btn" data-sc-add>Add</button><button class="btn" data-sc-sample>Use a sample barcode</button></div>${sc.msg ? `<p class="${sc.bad ? "msg-bad" : "msg-ok"}">${esc(sc.msg)}</p>` : ""}${lines}<button class="btn pri" data-sc-done ${done ? "" : "disabled"} style="align-self:flex-start">Delivered</button>${done ? "" : '<p class="note">Scan every unit to finish.</p>'}`;
+  const inp = document.getElementById("sc-code"); if (inp) inp.focus();
+}
+function scanCode(code) {
+  const sc = S.scan, j = S.jobs.find((x) => x.id === sc.jobId);
+  code = String(code || "").trim().toUpperCase(); if (!code) return;
+  const it = S.stock.find((x) => x.kind === "unit" && x.serials.includes(code));
+  const say = (m, bad) => { sc.msg = m; sc.bad = bad; scanBody(); };
+  if (!it) { const o = S.stock.flatMap((x) => (x.out || []).map((u) => ({ ...u, x }))).find((u) => u.serial === code); return say(o ? `${code} already went to ${o.job}.` : `${code} isn't in the store.`, true); }
+  if (sc.picked.some((p) => p.serial === code)) return say(`${code} is already scanned.`, true);
+  const line = j.stock.find((l) => l.id === it.id);
+  if (!line) return say(`${code} is a ${it.name}, not on this job.`, true);
+  if (sc.picked.filter((p) => p.id === it.id).length >= line.q) return say(`All ${it.name} for this job are scanned.`, true);
+  sc.picked.push({ id: it.id, serial: code }); say(`${code} added.`);
+}
+function sampleCode() {
+  const sc = S.scan, j = S.jobs.find((x) => x.id === sc.jobId);
+  for (const l of j.stock) { const it = item(l.id); if (it.kind !== "unit") continue; if (sc.picked.filter((p) => p.id === l.id).length >= l.q) continue; const free = it.serials.find((x) => !sc.picked.some((p) => p.serial === x)); if (free) return scanCode(free); sc.msg = `No ${it.name} left in the store: see To order.`; sc.bad = true; return scanBody(); }
+}
+function delivered() {
+  const sc = S.scan, j = S.jobs.find((x) => x.id === sc.jobId);
+  for (const p of sc.picked) { const it = item(p.id); it.serials = it.serials.filter((x) => x !== p.serial); it.out.push({ serial: p.serial, job: j.name }); }
+  for (const l of j.stock) { const it = item(l.id); if (it.kind === "bulk") it.onHand -= l.q; }
+  j.delivered = { serials: sc.picked.map((p) => p.serial) };
+  if (j.name === "Mark Vella") S.steps[2] = true;
+  S.scan = null; document.getElementById("modal").hidden = true; S.storeTab = S.steps[2] && toOrder().length ? "order" : "deliv"; render();
+}
+function stockInUnit(code) {
+  const it = item(S.inItem); code = String(code || "").trim().toUpperCase(); if (!code) return;
+  if (S.stock.some((x) => x.kind === "unit" && x.serials.includes(code))) S.storeLog.unshift({ t: `${code} is already in the store.`, bad: true });
+  else { it.serials.push(code); S.storeLog.unshift({ t: `${code} · ${it.name} added` }); }
+  render(); const i = document.getElementById("in-code"); if (i) i.focus();
+}
+const hasJobFor = (v) => S.jobs.some((j) => j.name === v.name);
+const countPhotos = (j) => Object.values(j.photos).reduce((n, a) => n + a.length, 0);
+const jobPill = (j) => j.status === "closed" ? '<span class="pill p-ok">Installed</span>' : j.status === "done" ? '<span class="pill p-booked">Job done</span>' : '<span class="pill p-todo">To do</span>';
+
+function renderPhone() {
+  const mine = S.jobs.filter((j) => j.team === "Team A" && j.status === "todo").sort((a, b) => a.date.localeCompare(b.date));
+  const sent = S.jobs.filter((j) => j.team === "Team A" && j.status !== "todo");
+  const job = (j) => {
+    const boxes = BOXES.map((b, bi) => {
+      const ph = j.photos[bi] || [];
+      return `<div class="box"><div class="box-head"><span>${b}${ph.length ? " (" + ph.length + ")" : ""}</span><span class="row" style="gap:6px"><label class="btn" for="f-${j.id}-${bi}" style="padding:6px 10px">Take photo</label><input id="f-${j.id}-${bi}" type="file" accept="image/*" hidden data-file="${j.id}:${bi}"><button class="btn" style="padding:6px 10px" data-sample="${j.id}:${bi}">Sample</button></span></div>${ph.length ? `<div class="thumbs">${ph.map((p) => p.url ? `<img class="thumb" src="${p.url}" alt="${b}">` : `<span class="sample" style="background:${p.c}" role="img" aria-label="Sample photo"></span>`).join("")}</div>` : ""}</div>`;
+    }).join("");
+    const n = countPhotos(j);
+    return `<div class="job ${j.date === iso(D(0)) ? "today" : ""}"><div class="between"><b style="color:var(--brand)">${j.date === iso(D(0)) ? "Today" : j.date === iso(D(1)) ? "Tomorrow" : nice(new Date(j.date))} · ${nice(new Date(j.date))}</b>${jobPill(j)}</div>
+      <div class="name" style="font-size:19px">${esc(j.name)}</div>
+      <div class="addr"><span>${esc(j.place)}</span><a class="btn pri" style="padding:6px 10px;min-height:36px" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(j.place + ", Malta")}" target="_blank" rel="noopener">Directions</a></div>
+      <div class="blk"><b>Work to do</b><p>${esc(j.what)}</p></div><div class="blk"><b>Materials</b><p>${esc(j.materials)}${(j.stock || []).length ? "\n" + j.stock.map((l) => l.q + " × " + item(l.id).name).join("\n") : ""}</p></div>${j.note ? `<div class="blk"><b>Note from the office</b><p>${esc(j.note)}</p></div>` : ""}
+      ${boxes}
+      <button class="btn pri" data-jobdone="${j.id}" ${n ? "" : "disabled"}>Job done (${n} photo${n === 1 ? "" : "s"})</button>${n ? "" : '<p class="note">Add at least one photo to finish.</p>'}</div>`;
+  };
+  return `<div class="phonewrap"><div class="phone">${head("Team A · Installer app")}<div class="pbody">
+    <div class="tabs" role="group" aria-label="Phone tabs"><button aria-pressed="true">My jobs (${mine.length})</button><button aria-pressed="false" disabled>Done (${sent.length})</button></div>
+    ${mine.map(job).join("") || '<p class="sub">No jobs left. Switch back to the Office view.</p>'}
+    ${sent.map((j) => `<div class="job"><div class="between"><b>${esc(j.name)}</b>${jobPill(j)}</div><p class="note">Photos sent to the office.</p></div>`).join("")}
+  </div></div></div>`;
+}
+
+function render() {
+  document.getElementById("v-office").setAttribute("aria-pressed", S.view === "office");
+  document.getElementById("v-phone").setAttribute("aria-pressed", S.view === "phone");
+  document.getElementById("app").innerHTML = S.view === "office" ? renderOffice() : renderPhone();
+  renderSteps(); renderFeedback();
+}
+
+function modal(title, html) { document.getElementById("m-h").textContent = title; document.getElementById("m-body").innerHTML = html; document.getElementById("modal").hidden = false; document.getElementById("m-close").focus(); }
+document.getElementById("m-close").onclick = () => { document.getElementById("modal").hidden = true; S.scan = null; render(); };
+
+function openJob(id) {
+  const j = S.jobs.find((x) => x.id === id);
+  const photos = BOXES.map((b, bi) => (j.photos[bi] || []).length ? `<div><b style="font-size:13px">${b}</b><div class="thumbs">${j.photos[bi].map((p) => p.url ? `<img class="thumb" src="${p.url}" alt="${b}">` : `<span class="sample" style="background:${p.c}" role="img" aria-label="Sample photo"></span>`).join("")}</div></div>` : "").join("");
+  modal("Job done: " + j.name, `<p class="sub">${esc(j.team)} · ${esc(j.place)}</p>${photos}<p class="note">In the app you can also download all the photos in one zip file.</p><button class="btn pri" data-installed="${j.id}">Installed - close the job</button>`);
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button, [data-step]"); if (!t) return;
+  if (t.id === "v-office") return go("office");
+  if (t.id === "v-phone") return go("phone");
+  if (t.id === "reset") { S = fresh(); return render(); }
+  if (t.dataset.step) return STEPS[+t.dataset.step][2]();
+  if (t.dataset.screen) { S.screen = t.dataset.screen; return render(); }
+  if (t.dataset.jobtab) { S.jobTab = t.dataset.jobtab; return render(); }
+  if (t.dataset.storetab) { S.storeTab = t.dataset.storetab; S.storeLog = []; return render(); }
+  if (t.dataset.stockfilter) { S.stockFilter = t.dataset.stockfilter; return render(); }
+  if (t.dataset.scanout) { const j = S.jobs.find((x) => x.id === t.dataset.scanout); S.scan = { jobId: j.id, picked: [], msg: "" }; modal("Delivery: " + j.name, ""); return scanBody(); }
+  if (t.hasAttribute("data-sc-add")) return scanCode(document.getElementById("sc-code").value);
+  if (t.hasAttribute("data-sc-sample")) return sampleCode();
+  if (t.hasAttribute("data-sc-done")) return delivered();
+  if (t.hasAttribute("data-in-add")) return stockInUnit(document.getElementById("in-code").value);
+  if (t.hasAttribute("data-in-sample")) { const pre = { oven: "OV-", hob: "HB-", sink: "SK-" }[S.inItem]; return stockInUnit(pre + (2300 + Math.floor(Math.random() * 600))); }
+  if (t.hasAttribute("data-in-bulk")) { const it = item(S.inItem), q = +document.getElementById("in-qty").value || 0; if (q > 0) { it.onHand += q; S.storeLog.unshift({ t: `${q} ${it.unit} · ${it.name} added` }); } return render(); }
+  if (t.dataset.mark) { S.editing = t.dataset.mark; return render(); }
+  if (t.hasAttribute("data-cancel")) { S.editing = null; return render(); }
+  if (t.dataset.visitDone) { const v = S.visits.find((x) => x.id === t.dataset.visitDone); const inp = document.getElementById("note-" + v.id); v.note = inp ? inp.value : ""; v.status = "done"; S.editing = null; if (v.name === "Joe Grech") S.steps[0] = true; return render(); }
+  if (t.dataset.makeJob) { const v = S.visits.find((x) => x.id === t.dataset.makeJob); return modal("New job for " + v.name, `<label class="field" for="nj-team">Team<select id="nj-team"><option>Team A</option><option>Team B</option></select></label><label class="field" for="nj-date">Date<input type="date" id="nj-date" value="${iso(D(1))}"></label><label class="field" for="nj-mat">Materials<textarea id="nj-mat" rows="3">8 base units, 5 wall units\nOak worktop 3.0 m</textarea></label><div class="field"><span>From the store (kept aside as soon as the job is created)</span>${JOE_STOCK.map((l) => { const it = item(l.id), a = sumStock()[l.id].available; return `<div class="sline"><span>${esc(it.name)}</span><input class="qty" type="number" min="0" id="nj-q-${l.id}" value="${l.q}" aria-label="Quantity of ${esc(it.name)}"><span class="note">${a < 0 ? "short " + (-a) : a + " available"}</span></div>`; }).join("")}</div><button class="btn pri" data-create="${v.id}">Create job</button>`); }
+  if (t.dataset.create) { const v = S.visits.find((x) => x.id === t.dataset.create); S.jobs.push({ id: "j" + Date.now(), fromVisit: v.id, name: v.name, place: v.place, what: v.what, team: document.getElementById("nj-team").value, date: document.getElementById("nj-date").value || iso(D(1)), materials: document.getElementById("nj-mat").value, note: "Site visit: " + v.note, photos: {}, status: "todo", stock: JOE_STOCK.map((l) => ({ id: l.id, q: +(document.getElementById("nj-q-" + l.id) || {}).value || 0 })).filter((l) => l.q > 0) }); if (v.name === "Joe Grech") S.steps[1] = true; document.getElementById("modal").hidden = true; S.screen = "jobs"; S.jobTab = "calendar"; return render(); }
+  if (t.dataset.sample) { const [id, bi] = t.dataset.sample.split(":"); const j = S.jobs.find((x) => x.id === id); const hues = [28, 200, 140, 260]; (j.photos[bi] = j.photos[bi] || []).push({ c: `linear-gradient(135deg, hsl(${hues[bi]} 35% 70%), hsl(${hues[bi]} 30% 45%))` }); return render(); }
+  if (t.dataset.jobdone) { const j = S.jobs.find((x) => x.id === t.dataset.jobdone); return modal("Job done?", `<p class="sub">The ${countPhotos(j)} photo${countPhotos(j) === 1 ? "" : "s"} for ${esc(j.name)} go to the office, and the office gets an alert.</p><button class="btn pri" data-confirm-done="${j.id}">Yes, job done</button>`); }
+  if (t.dataset.confirmDone) { const j = S.jobs.find((x) => x.id === t.dataset.confirmDone); j.status = "done"; if (j.name === "Joe Grech") S.steps[3] = true; document.getElementById("modal").hidden = true; return render(); }
+  if (t.dataset.openJob) return openJob(t.dataset.openJob);
+  if (t.dataset.installed) { const j = S.jobs.find((x) => x.id === t.dataset.installed); j.status = "closed"; if (j.name === "Joe Grech") { S.steps[4] = true; S.owing.unshift({ name: j.name, what: j.what, due: 2400, phone: "7912 3456" }); } document.getElementById("modal").hidden = true; S.view = "office"; S.screen = "money"; render(); if (S.steps.every(Boolean)) modal("That's the whole flow", `<p class="sub">Visit, job, materials scanned out of the store, photos from the team, closed by the office, and the balance is now in Money to collect. Please tell us what you think below.</p>`); return; }
+  if (t.dataset.remind) { const o = S.owing[+t.dataset.remind]; return modal("WhatsApp reminder", `<div class="bubble">Hello ${esc(o.name.split(" ")[0])}, this is Your Company. Thank you for choosing us. A balance of €${o.due.toLocaleString("en-GB")} is still due for your ${esc(o.what.toLowerCase())}.\n\nBank: Example Bank\nIBAN: MT00 EXAM 0000 0000 0000 0000 0000 000</div><p class="note">In the app this opens WhatsApp with the message ready to send. Nothing is sent from this demo.</p>`); }
+  if (t.dataset.q) { const [q, v] = t.dataset.q.split("|"); S[q] = v; return renderFeedback(); }
+  if (t.id === "fb-copy") return copyAnswers();
+});
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.id === "in-item") { S.inItem = t.value; S.storeLog = []; return render(); }
+  if (t.dataset.visitDate) { const v = S.visits.find((x) => x.id === t.dataset.visitDate); v.date = t.value; v.status = t.value ? "booked" : "pending"; return render(); }
+  if (t.dataset.file && t.files && t.files[0]) { const [id, bi] = t.dataset.file.split(":"); const j = S.jobs.find((x) => x.id === id); (j.photos[bi] = j.photos[bi] || []).push({ url: URL.createObjectURL(t.files[0]) }); return render(); }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "fb-trade" || e.target.id === "fb-missing") updateWa();
+  if (e.target.id === "st-q") { const q = e.target.value.trim().toUpperCase(), out = document.getElementById("st-hit"); if (!q) { out.textContent = ""; return; } const inS = S.stock.find((x) => x.kind === "unit" && x.serials.includes(q)); const gone = S.stock.flatMap((x) => (x.out || []).map((u) => ({ ...u, x }))).find((u) => u.serial === q); out.textContent = inS ? `${q} · ${inS.name} · in the store` : gone ? `${q} · ${gone.x.name} · went to ${gone.job}` : ""; }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  if (e.target.id === "sc-code") { e.preventDefault(); scanCode(e.target.value); }
+  if (e.target.id === "in-code") { e.preventDefault(); stockInUnit(e.target.value); }
+});
+
+/* feedback */
+const Q1 = ["Yes", "Maybe", "No"], Q2 = ["Under €50", "€50–100", "€100–200", "Over €200"];
+function answers() {
+  return `Feedback on the ${CONTACT.product ? CONTACT.product + " " : ""}demo\nCompany: ${document.getElementById("fb-trade").value || "-"}\nWould use it: ${S.q1 || "-"}\nWould pay per month: ${S.q2 || "-"}\nMissing / change: ${document.getElementById("fb-missing").value || "-"}`;
+}
+function updateWa() {
+  const a = document.getElementById("fb-wa");
+  const num = CONTACT.whatsapp.replace(/\D/g, "");
+  a.hidden = !num;
+  if (num) a.href = "https://wa.me/" + num + "?text=" + encodeURIComponent(answers());
+}
+function renderFeedback() {
+  document.getElementById("q1").innerHTML = Q1.map((x) => `<button data-q="q1|${x}" aria-pressed="${S.q1 === x}">${x}</button>`).join("");
+  document.getElementById("q2").innerHTML = Q2.map((x) => `<button data-q="q2|${x}" aria-pressed="${S.q2 === x}">${x}</button>`).join("");
+  document.getElementById("c-email").textContent = CONTACT.email;
+  document.getElementById("c-phone").textContent = CONTACT.phone;
+  updateWa();
+}
+async function copyAnswers() {
+  const out = document.getElementById("fb-copied");
+  try { await navigator.clipboard.writeText(answers()); out.textContent = "Copied. Paste it into an email or WhatsApp to us."; }
+  catch (e) { modal("Your answers", `<textarea rows="7" style="width:100%;font:inherit" readonly>${esc(answers())}</textarea><p class="note">Select the text and copy it.</p>`); }
+}
+render();
+</script>
+
+</body></html>
