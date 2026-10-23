@@ -200,3 +200,5 @@ input[type=file]{font-size:14px;color:var(--ink)}
 }
 
 .payblk{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.btn.danger{color:var(--bad);border-color:var(--bad-soft)}
+.btn.danger:hover{background:var(--bad-soft)}
