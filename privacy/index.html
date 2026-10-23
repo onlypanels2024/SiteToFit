@@ -51,7 +51,7 @@ footer a{color:#fff}
 <li><b>Account details:</b> name, email address, role (for example office, salesperson, store keeper or installer team) and which company you belong to.</li>
 <li><b>Business data your company adds:</b> clients, enquiries, site visits, jobs, photos, stock, serial numbers and balances owed.</li>
 <li><b>Basic technical data</b> needed to keep the app working and secure, such as when you last signed in.</li>
-<li><b>Quote requests</b> you send with the “Ask for a quote” form on siteto.fit: your name, company, trade, phone, email, team size and message. We store them in Google Firebase and they are emailed to us, so we can reply.</li>
+<li><b>Quote requests</b> you send with the “Ask for a quote” form on siteto.fit: your name, company, trade, phone, email, team size and message. We store them in Google Firebase so we can reply.</li>
 <li><b>Questions you type into the website assistant.</b> They are sent to Google’s Gemini AI through Firebase to write the answer. We don’t store these conversations. Please don’t type personal or sensitive details into the assistant.</li>
 <li><b>Messages you send us</b> by WhatsApp, email or phone, including feedback on the demo. The demo itself doesn’t store your answers; it only opens WhatsApp or your email with the text ready for you to send.</li>
 </ul>
@@ -68,7 +68,8 @@ footer a{color:#fff}
 <h2>Where it is kept and who helps us</h2>
 <ul>
 <li>App data, logins and photos are stored with <b>Google Firebase</b> in the <b>European Union (Belgium)</b>. Google acts as our sub-processor under its data processing terms.</li>
-<li>This website is hosted by <b>GitHub Pages</b>. Quote requests are stored with <b>Google Firebase</b> and sent to our email through <b>Gmail</b>.</li>
+<li>This website is hosted by <b>GitHub Pages</b>. Quote requests are stored with <b>Google Firebase</b>.</li>
+<li>When a quote request arrives, we get a phone notification through <b>ntfy</b>. It contains only the trade and team size, never names or contact details.</li>
 <li>The website assistant uses <b>Google’s Gemini AI</b> through Firebase. Google processes the questions to produce the answers, under its terms for business customers.</li>
 <li>The website loads its fonts from <b>Google Fonts</b>, which means your browser contacts Google and shares your IP address with it.</li>
 <li>If you message us on <b>WhatsApp</b>, WhatsApp's own privacy policy applies to that message.</li>
