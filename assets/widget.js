@@ -1,0 +1,72 @@
+var h=/[?&]test\b/.test(location.search)||["localhost","127.0.0.1"].includes(location.hostname),b=15,x=["What does SiteToFit do?","How much does it cost?","Does it work for aluminium companies?","Is there a free trial?"],a=e=>String(e??"").replace(/[&<>"']/g,t=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[t]),y=e=>{let t=a(e).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(https?:\/\/[^\s<]+|siteto\.fit\/[a-z/-]*)/g,s=>`<a href="${s.startsWith("http")?s:"https://"+s}" target="_blank" rel="noopener">${s}</a>`).split(`
+`),o="",n=!1;for(let s of t){let c=/^\s*[-*•]\s+(.*)$/.exec(s);c?(n||(o+="<ul>",n=!0),o+=`<li>${c[1]}</li>`):(n&&(o+="</ul>",n=!1),s.trim()&&(o+=`<p>${s}</p>`))}return o+(n?"</ul>":"")},d=null;async function f(){return h?{ask:async e=>{await new Promise(o=>setTimeout(o,500));let t=e.at(-1).text.toLowerCase();return t.includes("cost")||t.includes("price")?"Prices aren\u2019t published yet, because they depend on the size of your team and the parts you need. Tap **Ask for a quote** and Gary will get back to you.":`SiteToFit is one app for companies that sell, measure and install. It covers:
+- enquiries and site visits
+- jobs for your installer teams, with photos on their phones
+- your store and stock
+- payment on the day and money to collect
+(Test answer: the real assistant runs on the live site.)`},saveQuote:async e=>{await new Promise(t=>setTimeout(t,400)),console.log("TEST quote",e)}}:(d||(d=await import("./fb-GVDAKMQC.js")),d)}var w=`
+.stf-launch{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:center;gap:8px;border:0;border-radius:99px;padding:13px 18px 13px 14px;background:#c5f135;color:#1a1240;font:700 15px "Public Sans",system-ui,sans-serif;box-shadow:0 12px 30px rgba(26,18,64,.35);cursor:pointer}
+.stf-launch:hover{background:#b2dc22}
+.stf-launch svg{flex-shrink:0}
+.stf-launch[hidden]{display:none}
+.stf-chat{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:61;width:min(390px,calc(100vw - 32px));height:min(600px,calc(100vh - 32px));background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(24,33,43,.28);display:flex;flex-direction:column;overflow:hidden;font-family:"Public Sans",system-ui,sans-serif;color:#18212b}
+.stf-chat[hidden]{display:none}
+.stf-chead{background:#3a17c4;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stf-chead b{font-family:"Archivo",system-ui,sans-serif;font-size:17px;display:block}
+.stf-chead small{color:#d8d0ff;font-size:12.5px}
+.stf-x{border:0;background:rgba(255,255,255,.14);color:#fff;width:36px;height:36px;border-radius:10px;font-size:20px;line-height:1;cursor:pointer}
+.stf-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f4f6f8}
+.stf-m{max-width:88%;padding:10px 12px;border-radius:14px;font-size:14.5px;line-height:1.5}
+.stf-m p{margin:0 0 6px}.stf-m p:last-child{margin:0}.stf-m ul{margin:4px 0 6px;padding-left:18px}.stf-m a{color:#3a17c4}
+.stf-m.bot{background:#fff;border:1px solid #dde2e7;align-self:flex-start;border-bottom-left-radius:4px}
+.stf-m.me{background:#3a17c4;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.stf-m.wait{color:#566270;font-style:italic}
+.stf-sugg{display:flex;flex-wrap:wrap;gap:6px}
+.stf-sugg button{border:1px solid #c9bdfb;background:#fff;color:#3a17c4;border-radius:99px;padding:7px 11px;font:600 13px "Public Sans",system-ui,sans-serif;cursor:pointer}
+.stf-form{display:flex;gap:8px;padding:10px;border-top:1px solid #dde2e7;background:#fff}
+.stf-form input{flex:1;min-width:0;font:15px "Public Sans",system-ui,sans-serif;border:1px solid #dde2e7;border-radius:10px;padding:10px 12px;color:#18212b}
+.stf-send{border:0;background:#c5f135;color:#1a1240;border-radius:10px;padding:0 14px;font:700 14px "Public Sans",system-ui,sans-serif;cursor:pointer;min-height:44px}
+.stf-send:disabled{opacity:.5;cursor:not-allowed}
+.stf-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px 10px;font-size:12px;color:#566270;background:#fff;flex-wrap:wrap}
+.stf-foot button{border:0;background:none;color:#3a17c4;font:700 13px "Public Sans",system-ui,sans-serif;text-decoration:underline;cursor:pointer;padding:4px 0}
+.stf-modal{position:fixed;inset:0;z-index:70;background:rgba(10,14,20,.55);display:grid;place-items:center;padding:16px;overflow-y:auto}
+.stf-modal[hidden]{display:none}
+.stf-box{background:#fff;border-radius:18px;width:100%;max-width:560px;padding:22px;display:flex;flex-direction:column;gap:14px;font-family:"Public Sans",system-ui,sans-serif;color:#18212b;max-height:calc(100vh - 32px);overflow-y:auto}
+.stf-box h2{font-family:"Archivo",system-ui,sans-serif;font-size:24px;margin:0}
+.stf-box p{margin:0;color:#566270;font-size:15px}
+.stf-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stf-f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#566270}
+.stf-f input,.stf-f select,.stf-f textarea{font:15px "Public Sans",system-ui,sans-serif;color:#18212b;border:1px solid #dde2e7;border-radius:10px;padding:10px 12px;min-height:44px;background:#fff;width:100%}
+.stf-f textarea{min-height:90px;resize:vertical}
+.stf-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stf-pri{border:0;background:#3a17c4;color:#fff;border-radius:10px;padding:12px 20px;font:700 16px "Public Sans",system-ui,sans-serif;cursor:pointer;min-height:48px}
+.stf-pri:disabled{opacity:.6;cursor:progress}
+.stf-ghost{border:1px solid #dde2e7;background:#fff;color:#18212b;border-radius:10px;padding:11px 18px;font:600 15px "Public Sans",system-ui,sans-serif;cursor:pointer;min-height:48px}
+.stf-box .stf-err{color:#991b1b;font-size:14px;margin:0}
+.stf-ok{background:#ecfccb;border-radius:12px;padding:16px;color:#1a2e05}
+.stf-small{font-size:12.5px!important}
+.stf-small a{color:#3a17c4}
+:focus-visible{outline-offset:2px}
+@media (max-width:560px){.stf-grid{grid-template-columns:1fr}.stf-launch span{display:none}.stf-launch{padding:14px}.stf-chat{right:0;bottom:0;width:100vw;height:100%;border-radius:0}}
+`,v='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';function k(){let e=document.createElement("style");e.textContent=w,document.head.appendChild(e);let t=document.createElement("div");t.innerHTML=`
+  <button class="stf-launch" id="stf-launch" type="button" aria-haspopup="dialog">${v}<span>Questions? Ask us</span></button>
+  <section class="stf-chat" id="stf-chat" role="dialog" aria-label="SiteToFit assistant" hidden>
+    <div class="stf-chead"><div><b>SiteToFit assistant</b><small>Answers about SiteToFit, in seconds</small></div><button class="stf-x" id="stf-close" type="button" aria-label="Close the chat">\xD7</button></div>
+    <div class="stf-msgs" id="stf-msgs" aria-live="polite"></div>
+    <form class="stf-form" id="stf-form"><input id="stf-in" maxlength="400" autocomplete="off" placeholder="Type your question\u2026" aria-label="Your question"><button class="stf-send" id="stf-send" type="submit">Send</button></form>
+    <div class="stf-foot"><span>AI answers can be wrong. Don\u2019t share private details.</span><button type="button" data-quote>Ask for a quote</button></div>
+  </section>
+  <div class="stf-modal" id="stf-quote" hidden><div class="stf-box" role="dialog" aria-modal="true" aria-labelledby="stf-qh">
+    <div class="stf-row" style="justify-content:space-between"><h2 id="stf-qh">Ask for a quote</h2><button class="stf-ghost" type="button" id="stf-qclose" aria-label="Close">Close</button></div>
+    <div id="stf-qbody"></div>
+  </div></div>`,document.body.appendChild(t)}var r=[],l=0;try{l=Number(sessionStorage.getItem("stf-asked"))||0}catch{}function i(e,t,o=""){let n=document.createElement("div");n.className=`stf-m ${t} ${o}`,n.innerHTML=t==="me"?`<p>${a(e)}</p>`:y(e);let s=document.getElementById("stf-msgs");return s.appendChild(n),s.scrollTop=s.scrollHeight,n}function q(){document.getElementById("stf-chat").hidden=!1,document.getElementById("stf-launch").hidden=!0;let e=document.getElementById("stf-msgs");if(!e.children.length){i("Hi! I can answer questions about SiteToFit: what it does, how it works for your trade and how to get started. What would you like to know?","bot");let t=document.createElement("div");t.className="stf-sugg",t.id="stf-sugg",t.innerHTML=x.map(o=>`<button type="button">${a(o)}</button>`).join(""),e.appendChild(t)}setTimeout(()=>document.getElementById("stf-in").focus(),30)}function p(){document.getElementById("stf-chat").hidden=!0,document.getElementById("stf-launch").hidden=!1,document.getElementById("stf-launch").focus()}async function u(e){if(e=e.trim(),!e)return;if(document.getElementById("stf-sugg")?.remove(),l>=b){i("That\u2019s the most questions I can answer in one visit. For anything else, tap **Ask for a quote** or contact Gary on 7932 3756 or gary.falzon2104@gmail.com.","bot");return}l++;try{sessionStorage.setItem("stf-asked",String(l))}catch{}i(e,"me"),r.push({role:"user",text:e});let t=i("Thinking\u2026","bot","wait"),o=document.getElementById("stf-send");o.disabled=!0;try{let s=await(await f()).ask(r.slice(-10));t.remove(),i(s,"bot"),r.push({role:"model",text:s})}catch(n){console.warn(n),t.remove(),r.pop(),i("Sorry, I can\u2019t answer right now. Please try again in a moment, or contact Gary on 7932 3756 or gary.falzon2104@gmail.com.","bot")}finally{o.disabled=!1,document.getElementById("stf-in").focus()}}function E(){return`<p>Tell us a little about your company and Gary will get back to you, usually within one working day.</p>
+  <form id="stf-qform" class="stf-row" style="flex-direction:column;align-items:stretch;gap:12px" novalidate>
+    <div class="stf-grid"><label class="stf-f">Your name<input id="q-name" required maxlength="80" autocomplete="name"></label><label class="stf-f">Company<input id="q-company" required maxlength="100" autocomplete="organization"></label></div>
+    <div class="stf-grid"><label class="stf-f">Phone or WhatsApp<input id="q-phone" required maxlength="30" inputmode="tel" autocomplete="tel"></label><label class="stf-f">Email<input id="q-email" type="email" required maxlength="120" autocomplete="email"></label></div>
+    <div class="stf-grid"><label class="stf-f">Your trade<select id="q-trade"><option>Kitchens &amp; wardrobes</option><option>Aluminium &amp; windows</option><option>Air conditioning</option><option>Curtains &amp; blinds</option><option>CCTV &amp; alarms</option><option>Flooring</option><option>Solar</option><option>Other</option></select></label>
+    <label class="stf-f">How many people would use it?<select id="q-size"><option>1\u20135</option><option>6\u201310</option><option>11\u201325</option><option>26\u201350</option><option>More than 50</option></select></label></div>
+    <label class="stf-f">Anything we should know? (optional)<textarea id="q-text" maxlength="1500" placeholder="e.g. 3 installer teams, we keep stock in a warehouse, we'd like the store"></textarea></label>
+    <p class="stf-small">We use these details only to reply to you. See our <a href="/privacy/" target="_blank" rel="noopener">privacy policy</a>.</p>
+    <p class="stf-err" id="q-err" role="alert"></p>
+    <div class="stf-row"><button class="stf-pri" type="submit" id="q-send">Send my request</button></div>
+  </form>`}function m(){document.getElementById("stf-qbody").innerHTML=E(),document.getElementById("stf-quote").hidden=!1,document.body.style.overflow="hidden",setTimeout(()=>document.getElementById("q-name").focus(),30)}function g(){document.getElementById("stf-quote").hidden=!0,document.body.style.overflow=""}async function S(){let e=s=>document.getElementById(s).value.trim(),t={name:e("q-name"),company:e("q-company"),phone:e("q-phone"),email:e("q-email"),trade:e("q-trade"),size:e("q-size"),text:e("q-text")},o=document.getElementById("q-err");if(!t.name||!t.company||!t.phone||!t.email){o.textContent="Please fill in your name, company, phone and email.";return}if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t.email)){o.textContent="That email address doesn\u2019t look right. Please check it.";return}let n=document.getElementById("q-send");n.disabled=!0,n.textContent="Sending\u2026",o.textContent="";try{await(await f()).saveQuote(t),document.getElementById("stf-qbody").innerHTML=`<div class="stf-ok"><b>Thank you, ${a(t.name.split(" ")[0])}!</b><p style="color:inherit;margin-top:6px">Your request is with Gary. He\u2019ll contact you on ${a(t.phone)} or ${a(t.email)}, usually within one working day.</p></div><div class="stf-row"><button class="stf-ghost" type="button" id="stf-qdone">Close</button><a class="stf-ghost" href="/demo/" style="text-decoration:none;display:inline-flex;align-items:center">Try the demo meanwhile</a></div>`}catch(s){console.warn(s),n.disabled=!1,n.textContent="Send my request",o.innerHTML="Your request couldn\u2019t be sent. Please try again, or contact Gary directly on <b>7932 3756</b> or <b>gary.falzon2104@gmail.com</b>."}}k();document.addEventListener("click",e=>{let t=e.target;if(t.closest("[data-quote]")){e.preventDefault(),m();return}if(t.closest("#stf-launch"))return q();if(t.closest("#stf-close"))return p();if(t.closest("#stf-qclose")||t.closest("#stf-qdone")||t.id==="stf-quote")return g();let o=t.closest("#stf-sugg button");if(o)return u(o.textContent)});document.addEventListener("submit",e=>{if(e.target.id==="stf-form"){e.preventDefault();let t=document.getElementById("stf-in"),o=t.value;t.value="",u(o)}e.target.id==="stf-qform"&&(e.preventDefault(),S())});document.addEventListener("keydown",e=>{e.key==="Escape"&&(document.getElementById("stf-quote").hidden?document.getElementById("stf-chat").hidden||p():g())});location.hash==="#quote"&&m();

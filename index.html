@@ -42,6 +42,9 @@ img{max-width:100%;height:auto;display:block}
 .btn.pri:hover{background:var(--warm-dark)}
 .btn.ghost{border-color:rgba(255,255,255,.45);color:var(--on-navy)}
 .btn.ghost:hover{background:rgba(255,255,255,.08)}
+.btn.outline{border-color:var(--line);color:var(--ink);background:var(--paper)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.links .btn.quote-nav{color:var(--on-navy);border-color:rgba(255,255,255,.45);background:transparent}
 
 /* header + hero */
 .hero{background:var(--navy);color:var(--on-navy);overflow:hidden}
@@ -180,6 +183,7 @@ footer b{color:var(--on-navy);font-family:var(--display)}
         <a href="#store">The Store</a>
         <a href="#included">Also included</a>
         <a href="#why">Why us</a>
+        <a class="btn ghost quote-nav" href="#quote" data-quote>Ask for a quote</a>
         <a class="btn pri" href="#try">Try the demo</a>
       </div>
     </nav>
@@ -407,7 +411,7 @@ footer b{color:var(--on-navy);font-family:var(--display)}
             <div class="person">Gary Falzon</div>
             <div class="line-item"><strong id="c-phone">7932 3756</strong><small>phone &amp; WhatsApp</small></div>
             <div class="line-item"><strong id="c-email" style="font-size:17px">gary.falzon2104@gmail.com</strong><button class="copy" id="copy-email" type="button">Copy</button></div>
-            <div><a class="btn pri" href="https://wa.me/35679323756" target="_blank" rel="noopener">Message on WhatsApp</a></div>
+            <div class="row-btns"><a class="btn pri" href="#quote" data-quote>Ask for a quote</a><a class="btn outline" href="https://wa.me/35679323756" target="_blank" rel="noopener">Message on WhatsApp</a></div>
             <p class="status" id="copy-status" role="status"></p>
           </div>
         </div>
@@ -437,6 +441,7 @@ document.getElementById('copy-email').addEventListener('click', function () {
   } catch (e) { selectIt(); }
 });
 </script>
+<script type="module" src="/assets/widget.js"></script>
 
 </body>
 </html>
