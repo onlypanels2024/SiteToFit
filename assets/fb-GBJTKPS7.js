@@ -115,7 +115,7 @@ PRICES
 - Prices are not published yet. They depend on the size of the team and the parts switched on. The way to get a price is the "Ask for a quote" button, or contacting us.
 
 CONTACT
-- The SiteToFit sales team, phone and WhatsApp 7932 3756 (+356 7932 3756), email gary.falzon2104@gmail.com.
+- The SiteToFit sales team, phone and WhatsApp 7932 3756 (+356 7932 3756), email sitetofit@gmail.com.
 `,XC=`You are the assistant on the SiteToFit website (siteto.fit). You answer visitors' questions about SiteToFit only, using the facts below.
 Rules:
 - Answer only from the facts. If something isn't covered, say you're not sure and suggest the "Ask for a quote" button or contacting us. Never invent features, prices, discounts, dates, integrations or promises.
