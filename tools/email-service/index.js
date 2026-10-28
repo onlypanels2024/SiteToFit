@@ -132,3 +132,85 @@ Reply with JSON only, no other text, in this shape:
   const fields = (Array.isArray(r.fields) ? r.fields : []).filter((f) => FIELD_LIST.includes(f));
   return { contract: String(r.contract || '').slice(0, 200000), policy: String(r.policy || '').slice(0, 200000), fields, contractPages: String(r.contractPages || ''), policyPages: String(r.policyPages || ''), pages: Number(r.pages) || null, notes: String(r.notes || '').slice(0, 400), truncated: out.stop_reason === 'max_tokens' };
 });
+
+// ---------- In-app Help assistant + help requests to SiteToFit ----------
+const { onDocumentWritten } = require('firebase-functions/v2/firestore');
+const { GUIDE } = require('./help-guide.js');
+const NTFY_TOPIC = 'sitetofit-quotes-836cbad082d3'; // same private alert channel as the website (Gary's phone)
+const ROLE_LABEL = { owner: 'Owner / manager', office: 'Office', sales: 'Salesperson', store: 'Store keeper', team: 'Installer team', staff: 'Staff' };
+const PACKS = { sales: 'Sales app', store: 'Store', targets: 'Targets & report', payroll: 'Rota & payroll', contracts: 'Digital contracts' };
+
+exports.helpChat = onCall({ region: 'europe-west1', secrets: [ANTHROPIC_KEY], timeoutSeconds: 60 }, async (req) => {
+  const uid = req.auth && req.auth.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Please sign in.');
+  const db = admin.firestore();
+  const prof = (await db.doc('users/' + uid).get()).data();
+  if (!prof || !prof.companyId) throw new HttpsError('permission-denied', 'Your login isn’t linked to a company.');
+  const comp = (await db.doc('companies/' + prof.companyId).get()).data() || {};
+  // Daily limit per person, so costs can't run away.
+  const day = new Date().toISOString().slice(0, 10);
+  const cRef = db.doc('helpUsage/' + uid + '_' + day);
+  const used = await db.runTransaction(async (tx) => { const s = await tx.get(cRef); const n = ((s.exists && s.data().n) || 0) + 1; tx.set(cRef, { n, uid, day }); return n; });
+  if (used > 60) return { text: 'You’ve reached today’s limit for the assistant. Tap “Send to SiteToFit support” and Gary will help you.', handoff: true };
+  const msgs = (Array.isArray(req.data && req.data.messages) ? req.data.messages : []).slice(-16)
+    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 2000) }))
+    .filter((m) => m.content.trim());
+  while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+  if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw new HttpsError('invalid-argument', 'Type your question first.');
+  const packs = Object.keys(PACKS).filter((k) => comp.features && comp.features[k]).map((k) => PACKS[k]);
+  const system = 'You are the Help assistant inside the SiteToFit app. You help people at a company that uses SiteToFit to use the app, using only the guide below.\n'
+    + 'The person: role ' + (ROLE_LABEL[prof.role] || 'unknown') + ', company "' + clean(comp.name, 60) + '". Optional parts this company has switched on: ' + (packs.join(', ') || 'none') + '. Only explain parts they have; if they ask about one they don’t have, say it is an optional part SiteToFit can switch on.\n'
+    + 'They are on the screen: ' + clean(req.data && req.data.page, 40) + '.\n'
+    + 'Rules:\n- Answer only from the guide. Never invent buttons, features, prices or promises. Use the exact button names from the guide in quotes.\n'
+    + '- Short, clear steps: 1 to 5 short lines or numbered steps. Plain friendly language. No emojis.\n- Reply in the person’s language (English or Maltese).\n'
+    + '- If the guide doesn’t cover it, it needs SiteToFit to change something, it looks like a fault or missing data, or the person asks for a human: say briefly that SiteToFit support (Gary) will need to help, and end your reply with the exact text [[HANDOFF]].\n'
+    + '- You can’t see or change their data. Never ask for passwords, card numbers or ID card numbers.\n- Only help with SiteToFit; politely decline anything else. You are an AI assistant; say so if asked.\n'
+    + 'GUIDE:\n' + GUIDE;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': ANTHROPIC_KEY.value(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 700, temperature: 0.2, system, messages: msgs }),
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) { console.error('anthropic', res.status, out); throw new HttpsError('internal', 'The assistant isn’t available right now. Tap “Send to SiteToFit support” instead.'); }
+  let text = (out.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  const handoff = text.includes('[[HANDOFF]]');
+  text = text.replace(/\[\[HANDOFF\]\]/g, '').trim();
+  return { text: text || 'Sorry, I couldn’t answer that. Tap “Send to SiteToFit support”.', handoff };
+});
+
+// Phone alert to Gary when a help request arrives or the person writes again. No personal details are sent.
+exports.helpAlert = onDocumentWritten({ document: 'support/{id}', region: 'europe-west1', secrets: [RESEND_KEY], retry: false }, async (ev) => {
+  const before = ev.data.before.exists ? ev.data.before.data() : null;
+  const after = ev.data.after.exists ? ev.data.after.data() : null;
+  if (!after) return;
+  const nb = before ? (before.messages || []).length : 0;
+  const na = (after.messages || []).length;
+  if (na <= nb) return;
+  const last = (after.messages || [])[na - 1] || {};
+  // Gary replied: email the person too, in case they don't open Help straight away. The address comes from their login, not the request.
+  if (last.from === 'support') {
+    try {
+      const u = await admin.auth().getUser(after.uid);
+      if (!u.email) return;
+      const comp = (await admin.firestore().doc('companies/' + after.cid).get()).data() || {};
+      const link = SITE + (comp.slug ? '/c/' + comp.slug : '/app/');
+      const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const subj = clean(after.subject, 70);
+      await resend({
+        from: 'SiteToFit Support <support@siteto.fit>', to: [u.email], reply_to: 'gary.falzon2104@gmail.com',
+        subject: 'SiteToFit replied: ' + (subj || 'your help request'),
+        text: 'Hi ' + clean(after.name, 40) + ',\n\nGary from SiteToFit replied to your help request' + (subj ? ' "' + subj + '"' : '') + ':\n\n' + String(last.text || '') + '\n\nTo answer, open SiteToFit and tap Help, then My requests: ' + link + '\n\nSiteToFit',
+        html: '<div style="font-family:Arial,sans-serif;font-size:15px;color:#18212b;max-width:560px"><p>Hi ' + esc(clean(after.name, 40)) + ',</p><p>Gary from SiteToFit replied to your help request' + (subj ? ' <b>“' + esc(subj) + '”</b>' : '') + ':</p><div style="border-left:4px solid #c5f135;background:#f4f2ff;padding:12px 14px;border-radius:8px;white-space:pre-wrap">' + esc(last.text) + '</div><p>To answer, open SiteToFit and tap <b>Help</b>, then <b>My requests</b>.</p><p><a href="' + link + '" style="display:inline-block;background:#3a17c4;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open SiteToFit</a></p><p style="color:#5b6672;font-size:13px">SiteToFit · siteto.fit</p></div>',
+      });
+    } catch (e) { console.error('help reply email', e); }
+    return;
+  }
+  if (last.from !== 'user' || after.lastFrom !== 'user') return;
+  const isNew = !before;
+  await fetch('https://ntfy.sh/', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ topic: NTFY_TOPIC, title: isNew ? 'New SiteToFit help request' : 'New reply on a SiteToFit help request', message: 'A customer needs help in the app. Tap to open Help requests on your control dashboard.', tags: ['sos'], priority: isNew ? 4 : 3, click: SITE + '/app/#/admin/help/' + ev.params.id }),
+  }).catch((e) => console.error('ntfy', e));
+});
