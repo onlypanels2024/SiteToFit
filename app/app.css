@@ -321,3 +321,58 @@ canvas.sigpad{width:100%;height:auto;aspect-ratio:680/300;border:2px dashed #b9a
 .top .brandrow small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cemail .linkbtn{padding:0 0 0 6px;font-size:13px}
 .delrow{display:flex;justify-content:flex-end}.linkbtn.del{color:var(--bad);font-size:13.5px;padding:2px}
+
+/* ---------- Sales demo (siteto.fit/pitch/) ---------- */
+body.pitch{padding-top:64px}
+body.pitch [data-act="signout"],body.pitch-frame [data-act="signout"],body.pitch-frame .helpbtn{display:none}
+.pbar{position:fixed;top:0;left:0;right:0;height:64px;z-index:50;background:#3a17c4;color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;box-shadow:0 2px 10px rgba(20,16,48,.25)}
+.pbrand{display:flex;align-items:center;gap:10px;min-width:0}
+.pbrand i{width:34px;height:34px;border-radius:9px;background:#c5f135;color:#1a1240;display:grid;place-items:center;font-style:normal;font-weight:800;font-family:var(--display)}
+.pbrand span{font-family:var(--display);font-weight:800;font-size:18px;white-space:nowrap}
+.pbrand small{color:#d8d0ff;font-size:12.5px;white-space:nowrap}
+.pchips{display:flex;gap:6px;margin-left:auto;flex-wrap:nowrap;overflow-x:auto}
+.pchip{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:99px;padding:7px 14px;font-weight:700;font-size:14px;white-space:nowrap;min-height:36px}
+.pchip.on{background:#c5f135;color:#1a1240;border-color:#c5f135}
+.pnav{display:flex;align-items:center;gap:8px;white-space:nowrap;font-weight:700}
+.pbtn{border:0;border-radius:10px;padding:9px 14px;font-weight:800;background:rgba(255,255,255,.14);color:#fff;min-height:40px;min-width:40px;font-size:15px}
+.pbtn.pri{background:#c5f135;color:#1a1240}
+.pbtn:disabled{opacity:.35}
+.pbtn.wide{width:100%;margin-top:10px}
+.ppanel{position:fixed;z-index:49;background:#fff;color:var(--ink);box-shadow:0 0 24px rgba(20,16,48,.18);display:flex;flex-direction:column}
+.phead{border:0;background:#ece8ff;text-align:left;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
+.phead small{display:block;color:#5b2ee6;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.phead b{display:block;font-family:var(--display);font-size:20px;margin-top:2px}
+.phead i{font-style:normal;color:#3a17c4;font-size:18px}
+.pbody{padding:14px 16px 18px;overflow-y:auto}
+.pbody ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:9px;font-size:15.5px;line-height:1.45}
+.pmi{margin-top:14px;background:#3a17c4;color:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.pmi b{font-family:var(--display);font-size:34px;color:#c5f135}
+.pmi span{font-size:14px;color:#e2d9ff}
+.pnote{font-size:13px;color:var(--muted);margin:8px 0 0}
+.psteps{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.pdot{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;font-weight:700;font-size:13px}
+.pdot.on{background:#3a17c4;color:#fff;border-color:#3a17c4}
+.plink{border:0;background:none;color:#3a17c4;text-decoration:underline;font-weight:600;margin-top:14px;padding:4px 0}
+.pphone{display:none}
+@media (min-width:900px){
+  body.pitch #root{margin-right:360px}
+  .ppanel{top:64px;right:0;bottom:0;width:360px}
+  .phead{cursor:default}.phead i{display:none}
+  body.pitch-phone #root{display:none}
+  body.pitch-phone .pphone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:fixed;top:64px;left:0;right:360px;bottom:0;background:linear-gradient(160deg,#ece8ff,#f4f6f8)}
+  .pframe{width:400px;height:min(820px,calc(100vh - 120px));border:12px solid #0d1033;border-radius:44px;overflow:hidden;background:#fff;box-shadow:0 30px 70px rgba(20,16,48,.3)}
+  .pframe iframe{width:100%;height:100%;border:0;display:block}
+  .pphone p{margin:0;color:#3a17c4;font-weight:700}
+}
+@media (max-width:899px){
+  .pbrand small,.pbrand span{display:none}
+  .pbar{gap:8px;padding:0 10px}
+  .pchip{padding:6px 10px;font-size:13px}
+  .ppanel{left:0;right:0;bottom:0;border-radius:18px 18px 0 0;max-height:48vh}
+  .ppanel:not(.open) .pbody{display:none}
+  body.pitch{padding-bottom:110px}
+}
+body.pitch #stf-launch{display:none!important}
+body.pitch .hp,body.pitch .hp-shade{top:64px}
+@media (min-width:900px){body.pitch .hp{right:360px}body.pitch .hp-shade{right:360px}}
+@media (max-width:899px){body.pitch .hp{bottom:110px}}
