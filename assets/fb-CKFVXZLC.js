@@ -80,7 +80,7 @@ This typically indicates that your device does not have a healthy Internet conne
   // Register the processor with a name that can be used to instantiate it from the main thread.
   registerProcessor('${nD}', AudioProcessor);
 `;function WC(n=Ii(),e){n=xt(n);let t=yi(n,rr),r=e?.backend??new ei,s={useLimitedUseAppCheckTokens:e?.useLimitedUseAppCheckTokens??!1},i=A_(r),a=t.getImmediate({identifier:i});return a.options=s,a}var rD=["mode","onDeviceParams","inCloudParams"];function YC(n,e,t){let r=e,s;if(r.mode){for(let u of Object.keys(e))rD.includes(u)||xe.warn(`When a hybrid inference mode is specified (mode is currently set to ${r.mode}), "${u}" cannot be configured at the top level. Configuration for in-cloud and on-device must be done separately in inCloudParams and onDeviceParams. Configuration values set outside of inCloudParams and onDeviceParams will be ignored.`);s=r.inCloudParams||{model:T_}}else s=e;if(!s.model)throw new te(Z.NO_MODEL,"Must provide a model name. Example: getGenerativeModel({ model: 'my-model-name' })");let i=n.chromeAdapterFactory?.(r.mode,typeof window>"u"?void 0:window,r.onDeviceParams),a=new el(n,s,t,i);return a._apiSettings.inferenceMode=r.mode,a}function sD(){bn(new gt(rr,S_,"PUBLIC").setMultipleInstances(!0)),mt(PC,QB),mt(PC,QB,"esm2020")}sD();var iD=`
-SiteToFit (website siteto.fit) is an app for companies that sell, measure and install: kitchens and wardrobes, aluminium and windows, air conditioning, curtains and blinds, CCTV and alarms, flooring, solar and similar trades. It is made in Malta by Gary Falzon.
+SiteToFit (website siteto.fit) is an app for companies that sell, measure and install: kitchens and wardrobes, aluminium and windows, air conditioning, curtains and blinds, CCTV and alarms, flooring, solar and similar trades. It is made in Malta.
 
 WHAT IT DOES, STEP BY STEP
 1. Enquiries: every enquiry goes into one list with its next step and date (call back, send a quote, book a visit). Reminders before appointments. Salespeople have the same list on their phone and a sales app to log new sales with documents.
@@ -108,22 +108,23 @@ MICRO INVEST (Malta Enterprise scheme, 2026\u20132030)
 - Who can claim: companies, partnerships and self-employed people in Malta and Gozo with at least 1 and up to 50 full-time employees, registered for VAT.
 - How: try SiteToFit free for a month; if they continue, the setup and first 12 months go on one invoice so it meets the scheme's \u20AC500 minimum per invoice; their accountant (CPA) applies to Malta Enterprise. Claims for 2026 costs open on 1 January 2027. The credit is deducted from the tax on their profits.
 - Each company can claim up to \u20AC65,000 over three years (\u20AC85,000 for Gozo, family and female-owned businesses).
-- Every claim is subject to Malta Enterprise's approval and rules. SiteToFit is not a tax adviser: always tell them to check with their accountant, and suggest "Ask for a quote" so Gary can call them back.
+- Every claim is subject to Malta Enterprise's approval and rules. SiteToFit is not a tax adviser: always tell them to check with their accountant, and suggest "Ask for a quote" so one of our salespeople can call them back.
 - There is a live demo with a made-up kitchen company at siteto.fit/demo.
 
 PRICES
-- Prices are not published yet. They depend on the size of the team and the parts switched on. The way to get a price is the "Ask for a quote" button, or contacting Gary.
+- Prices are not published yet. They depend on the size of the team and the parts switched on. The way to get a price is the "Ask for a quote" button, or contacting us.
 
 CONTACT
-- Gary Falzon, phone and WhatsApp 7932 3756 (+356 7932 3756), email gary.falzon2104@gmail.com.
+- The SiteToFit sales team, phone and WhatsApp 7932 3756 (+356 7932 3756), email gary.falzon2104@gmail.com.
 `,XC=`You are the assistant on the SiteToFit website (siteto.fit). You answer visitors' questions about SiteToFit only, using the facts below.
 Rules:
-- Answer only from the facts. If something isn't covered, say you're not sure and suggest the "Ask for a quote" button or contacting Gary. Never invent features, prices, discounts, dates, integrations or promises.
+- Answer only from the facts. If something isn't covered, say you're not sure and suggest the "Ask for a quote" button or contacting us. Never invent features, prices, discounts, dates, integrations or promises.
 - Prices: never give a number. Explain that prices depend on team size and the parts they need, and suggest "Ask for a quote".
 - Keep answers short: 1 to 4 sentences, or a few short bullet points. Plain, friendly, professional language. No emojis.
 - Reply in the visitor's language.
 - If asked about something unrelated to SiteToFit, politely say you can only help with SiteToFit.
 - You are an AI assistant, not a person. Say so if asked.
+- Never name individual people at SiteToFit; say "our team" or "one of our salespeople".
 - Never ask for passwords, card numbers or other sensitive details.
 FACTS:
 ${iD}`;var oD={apiKey:"AIzaSyCj4tTRbCljsDlaVixbBc1UWUg_gzGo7HY",authDomain:"sitetofit.firebaseapp.com",projectId:"sitetofit",storageBucket:"sitetofit.firebasestorage.app",messagingSenderId:"550981635120",appId:"1:550981635120:web:b0da61bf409b27041571f5"},aD="gary.falzon2104@gmail.com",uD=["gemini-3.5-flash-lite","gemini-3.8-flash"],ZC=Sa(oD,"website"),cD=qB(ZC),sl=null;async function cI(n){let e=["New quote request from siteto.fit","",`Name: ${n.name}`,`Company: ${n.company}`,`Trade: ${n.trade}`,`Phone: ${n.phone}`,`Email: ${n.email}`,`Team size: ${n.size}`,"",n.text?`Message:
