@@ -169,7 +169,7 @@ exports.helpChat = onCall({ region: 'europe-west1', secrets: [ANTHROPIC_KEY], ti
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': ANTHROPIC_KEY.value(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 700, temperature: 0.2, system, messages: msgs }),
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 700, system, messages: msgs }),
   });
   const out = await res.json().catch(() => ({}));
   if (!res.ok) { console.error('anthropic', res.status, out); throw new HttpsError('internal', 'The assistant isn’t available right now. Tap “Send to SiteToFit support” instead.'); }
