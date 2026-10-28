@@ -320,3 +320,4 @@ canvas.sigpad{width:100%;height:auto;aspect-ratio:680/300;border:2px dashed #b9a
 .top > .brandrow{flex:1 1 auto;min-width:0}.top > .brandrow > div{min-width:0}
 .top .brandrow small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cemail .linkbtn{padding:0 0 0 6px;font-size:13px}
+.delrow{display:flex;justify-content:flex-end}.linkbtn.del{color:var(--bad);font-size:13.5px;padding:2px}

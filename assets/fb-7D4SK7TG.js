@@ -100,7 +100,15 @@ HOW IT WORKS FOR A COMPANY
 - SiteToFit sets up the company: logo, colours, job types, photo boxes, store products and logins. Companies can start in a day.
 - Data is stored with Google Firebase in the European Union (Belgium). Each company only sees its own data. Privacy policy at siteto.fit/privacy, terms at siteto.fit/terms.
 - Support is local, in Malta, by WhatsApp, phone or email.
-- Early companies get a free trial on their own page with their logo, their job types and photo boxes set up for them, and a say in what is built next.
+- Early companies get a free one-month trial on their own page with their logo, their job types and photo boxes set up for them, and a say in what is built next.
+
+MICRO INVEST (Malta Enterprise scheme, 2026\u20132030)
+- SaaS (online software) like SiteToFit counts as a digital investment under Malta Enterprise's Micro Invest scheme. The setup and the first 12 months of the first subscription can earn a tax credit of 65% (85% for companies operating from Gozo). Renewals after the first year don't qualify.
+- Example: for every \u20AC1,000 (excluding VAT) spent on setup and the first year, up to \u20AC650 comes back as a tax credit, so it really costs \u20AC350 (\u20AC150 in Gozo).
+- Who can claim: companies, partnerships and self-employed people in Malta and Gozo with at least 1 and up to 50 full-time employees, registered for VAT.
+- How: try SiteToFit free for a month; if they continue, the setup and first 12 months go on one invoice so it meets the scheme's \u20AC500 minimum per invoice; their accountant (CPA) applies to Malta Enterprise. Claims for 2026 costs open on 1 January 2027. The credit is deducted from the tax on their profits.
+- Each company can claim up to \u20AC65,000 over three years (\u20AC85,000 for Gozo, family and female-owned businesses).
+- Every claim is subject to Malta Enterprise's approval and rules. SiteToFit is not a tax adviser: always tell them to check with their accountant, and suggest "Ask for a quote" so Gary can call them back.
 - There is a live demo with a made-up kitchen company at siteto.fit/demo.
 
 PRICES

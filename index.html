@@ -3,7 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>body{margin:0}[hidden]{display:none!important}</style>
+<style>body{margin:0}[hidden]{display:none!important}/* Micro Invest */
+.mi{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:32px;margin-top:40px;align-items:start}
+.mi-hero{background:var(--navy);color:var(--on-navy);border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:14px}
+.mi-hero .big{font-family:var(--display);font-size:clamp(52px,8vw,84px);line-height:1;color:var(--warm);font-weight:800;letter-spacing:-.02em}
+.mi-hero .big small{font-size:.32em;color:var(--on-navy);font-weight:700;letter-spacing:0;margin-left:8px}
+.mi-hero p{color:var(--on-navy-muted);margin:0}
+.mi-ex{background:rgba(255,255,255,.08);border-radius:14px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:16px}
+.mi-ex span{color:var(--on-navy-muted)} .mi-ex b{text-align:right} .mi-ex .tot{border-top:1px solid rgba(255,255,255,.25);padding-top:8px;color:#fff;font-weight:700} .mi-ex .tot+b{border-top:1px solid rgba(255,255,255,.25);padding-top:8px;color:var(--warm)}
+.mi-steps{counter-reset:mi;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.mi-steps li{counter-increment:mi;display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
+.mi-steps li::before{content:counter(mi);width:36px;height:36px;border-radius:50%;background:var(--warm);color:var(--on-warm);font-family:var(--display);font-weight:800;display:grid;place-items:center}
+.mi-steps b{display:block;font-family:var(--display);font-size:17px}
+.mi-steps span{color:var(--muted);font-size:15.5px}
+.mi-small{font-size:13.5px;color:var(--muted);margin-top:18px;max-width:90ch}
+@media (max-width:900px){.mi{grid-template-columns:minmax(0,1fr)}}
+.mi-badge{display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px;padding:8px 14px 8px 8px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:var(--on-navy);text-decoration:none;font-size:15px;max-width:100%}
+.mi-badge b{background:var(--warm);color:var(--on-warm);border-radius:99px;padding:3px 10px;font-size:13px}
+.mi-badge:hover{background:rgba(255,255,255,.16)}
+</style>
 <title>SiteToFit</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="SiteToFit: one app for companies that sell, measure and install. Leads, site visits, jobs, your store and stock, installer teams, proof photos and money to collect.">
@@ -183,6 +201,7 @@ footer b{color:var(--on-navy);font-family:var(--display)}
         <a href="#store">The Store</a>
         <a href="#included">Also included</a>
         <a href="#why">Why us</a>
+        <a href="#microinvest">Micro Invest</a>
         <a class="btn ghost quote-nav" href="#quote" data-quote>Ask for a quote</a>
         <a class="btn pri" href="#try">Try the demo</a>
       </div>
@@ -194,6 +213,7 @@ footer b{color:var(--on-navy);font-family:var(--display)}
         <a class="btn pri" href="demo/">Open the live demo</a>
         <a class="btn ghost" href="#how">See what you get, step by step</a>
       </div>
+      <a class="mi-badge" href="#microinvest"><b>Micro Invest</b> Up to 65% of your first year back as a tax credit <span aria-hidden="true">→</span></a>
       <div class="trades" aria-label="Trades it works for"><span>Kitchens &amp; wardrobes</span><span>Aluminium &amp; windows</span><span>Air conditioning</span><span>Curtains &amp; blinds</span><span>CCTV &amp; alarms</span><span>Flooring</span><span>Solar</span></div>
       <div class="stage">
         <img class="office" src="img/jobs.webp" alt="The office screen: the installations calendar showing which team goes where this week" width="1400" height="836">
@@ -388,6 +408,35 @@ footer b{color:var(--on-navy);font-family:var(--display)}
     </div>
   </section>
 
+  <section class="band" id="microinvest" aria-labelledby="mi-h">
+    <div class="wrap">
+      <div class="eyebrow">Malta Enterprise · Micro Invest 2026–2030</div>
+      <h2 class="h2" id="mi-h">Get up to 65% of your first year back as a tax credit</h2>
+      <p class="lead">Under Malta Enterprise’s Micro Invest scheme, software you subscribe to online (SaaS), like SiteToFit, counts as a digital investment. If your company qualifies, the setup and your first 12 months can earn a tax credit of 65%, or 85% if you operate from Gozo.</p>
+      <div class="mi">
+        <div class="mi-hero">
+          <div class="big">65%<small>back as a tax credit</small></div>
+          <p>An example of how it adds up for every €1,000 you invest in setup and your first year (excluding VAT):</p>
+          <div class="mi-ex"><span>Setup and first 12 months</span><b>€1,000</b><span>Tax credit at 65%</span><b>− €650</b><span class="tot">What it really costs you</span><b>€350</b></div>
+          <p>In Gozo the credit is 85%, so the same €1,000 costs you €150.</p>
+          <div class="row-btns"><a class="btn pri" href="#quote" data-quote data-topic="microinvest">Request a call back and a quote</a></div>
+        </div>
+        <div class="card">
+          <h3>How it works</h3>
+          <ol class="mi-steps">
+            <li><div><b>Ask us to call you back</b><span>Tell us about your company and we’ll prepare a quote that fits your team.</span></div></li>
+            <li><div><b>Try it free for a month</b><span>Your own page with your logo, and your job types and photo boxes set up for you.</span></div></li>
+            <li><div><b>Keep going with one invoice</b><span>Setup and your first 12 months on one invoice, so it meets the scheme’s €500 minimum per invoice.</span></div></li>
+            <li><div><b>Your accountant claims the credit</b><span>They apply to Malta Enterprise for you. Claims for 2026 costs open on 1 January 2027, and the credit comes off the tax on your profits.</span></div></li>
+          </ol>
+          <h3 style="font-size:18px;margin-top:6px">Who can claim</h3>
+          <ul class="list"><li>Companies, partnerships and self-employed people in Malta and Gozo</li><li>With at least 1 and up to 50 full-time employees</li><li>Registered for VAT</li></ul>
+        </div>
+      </div>
+      <p class="mi-small">Micro Invest is run by Malta Enterprise, and every claim is subject to their approval and the scheme’s rules. Renewals after the first year don’t qualify. Each company can claim up to €65,000 over three years (€85,000 for Gozo, family and female-owned businesses). We’re not tax advisers, so please check with your accountant how it applies to you. Details on <a href="https://maltaenterprise.com" target="_blank" rel="noopener">maltaenterprise.com</a>.</p>
+    </div>
+  </section>
+
   <section class="band soft" id="try" aria-labelledby="try-h">
     <div class="wrap">
       <div class="eyebrow">Try it</div>
@@ -403,7 +452,7 @@ footer b{color:var(--on-navy);font-family:var(--display)}
         <div class="side">
           <div class="card">
             <h3>What you get as an early company</h3>
-            <ul class="list"><li>A free trial on your own page, with your logo</li><li>Your job types and photo boxes set up for you</li><li>A say in what we build next</li></ul>
+            <ul class="list"><li>A free one-month trial on your own page, with your logo</li><li>Up to 65% of your first year back through Micro Invest, if your company qualifies</li><li>Your job types and photo boxes set up for you</li><li>A say in what we build next</li></ul>
           </div>
           <div class="card" id="contact">
             <h3>Talk to us</h3>
@@ -441,7 +490,7 @@ document.getElementById('copy-email').addEventListener('click', function () {
   } catch (e) { selectIt(); }
 });
 </script>
-<script type="module" src="/assets/widget.js?v=1792744787"></script>
+<script type="module" src="/assets/widget.js?v=1793181712"></script>
 
 </body>
 </html>
