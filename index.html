@@ -3,512 +3,441 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>body{margin:0}[hidden]{display:none!important}/* Micro Invest */
-.mi{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:32px;margin-top:40px;align-items:start}
-.mi-hero{background:var(--navy);color:var(--on-navy);border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:14px}
-.mi-hero .big{font-family:var(--display);font-size:clamp(52px,8vw,84px);line-height:1;color:var(--warm);font-weight:800;letter-spacing:-.02em}
-.mi-hero .big small{font-size:.32em;color:var(--on-navy);font-weight:700;letter-spacing:0;margin-left:8px}
-.mi-hero p{color:var(--on-navy-muted);margin:0}
-.mi-ex{background:rgba(255,255,255,.08);border-radius:14px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:16px}
-.mi-ex span{color:var(--on-navy-muted)} .mi-ex b{text-align:right} .mi-ex .tot{border-top:1px solid rgba(255,255,255,.25);padding-top:8px;color:#fff;font-weight:700} .mi-ex .tot+b{border-top:1px solid rgba(255,255,255,.25);padding-top:8px;color:var(--warm)}
-.mi-steps{counter-reset:mi;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
-.mi-steps li{counter-increment:mi;display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
-.mi-steps li::before{content:counter(mi);width:36px;height:36px;border-radius:50%;background:var(--warm);color:var(--on-warm);font-family:var(--display);font-weight:800;display:grid;place-items:center}
-.mi-steps b{display:block;font-family:var(--display);font-size:17px}
-.mi-steps span{color:var(--muted);font-size:15.5px}
-.mi-small{font-size:13.5px;color:var(--muted);margin-top:18px;max-width:90ch}
-@media (max-width:900px){.mi{grid-template-columns:minmax(0,1fr)}}
-.mi-badge{display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px;padding:8px 14px 8px 8px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:var(--on-navy);text-decoration:none;font-size:15px;max-width:100%}
-.mi-badge b{background:var(--warm);color:var(--on-warm);border-radius:99px;padding:3px 10px;font-size:13px}
-.mi-badge:hover{background:rgba(255,255,255,.16)}
-</style>
 <title>SiteToFit</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="SiteToFit: one app for companies that sell, measure and install. Leads, site visits, jobs, your store and stock, installer teams, proof photos and money to collect.">
+<meta name="description" content="SiteToFit: the all-in-one CRM you can shape around your business. Enquiries, site visits, contracts, jobs, your store and stock, your teams, proof photos and money to collect, in one app.">
+<meta name="theme-color" content="#0d0a1f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: navy hero with the real screens, then a numbered walk-through that follows one job from enquiry to payment (text beside its screen, sides alternating), a Store section, what else is included, benefits, comparison and contact. Deliberately light-only, matching the brochure. */
+/* Layout: dark violet-navy page; particle globe behind the hero; every section is a centred column of dark cards with thin borders. Lime is the single accent. */
 :root{
-  color-scheme:light;
-  --navy:#3a17c4; --navy-deep:#2a0f94; --navy-soft:#ece8ff;
-  --warm:#c5f135; --warm-dark:#b2dc22; --warm-light:#c5f135; --warm-soft:#eef9cc;
-  --on-warm:#1a1240; --label:#5b2ee6;
-  --ink:#18212b; --muted:#566270; --line:#dde2e7; --paper:#ffffff; --soft:#f4f6f8;
-  --on-navy:#ffffff; --on-navy-muted:#d8d0ff; --ok:#166534;
-  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --bg:#0d0a1f; --bg2:#120e29; --card:#17122f; --line:rgba(255,255,255,.1); --line2:rgba(255,255,255,.18);
+  --txt:#f2effc; --muted:#a8a1c6; --dim:#7d76a0;
+  --violet:#7c5cff; --lime:#c5f135; --on-lime:#14102b;
+  --display:'Archivo',system-ui,sans-serif; --body:'Public Sans',system-ui,sans-serif; --mono:'Space Mono',ui-monospace,monospace;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55}
-h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
-p{margin:0}
-a{color:inherit}
-a:focus-visible,button:focus-visible{outline:3px solid var(--warm-light);outline-offset:3px;border-radius:6px}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+[hidden]{display:none!important}
 img{max-width:100%;height:auto;display:block}
-.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.band{padding-block:clamp(56px,8vw,96px)}
-.band.soft{background:var(--soft)}
-.eyebrow{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--label)}
-.h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.015em;margin-top:10px;max-width:24ch}
-.lead{font-size:18px;color:var(--muted);max-width:62ch;margin-top:14px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;font-size:16px;border:2px solid transparent;cursor:pointer;font-family:var(--body)}
-.btn.pri{background:var(--warm);color:var(--on-warm)}
-.btn.pri:hover{background:var(--warm-dark)}
-.btn.ghost{border-color:rgba(255,255,255,.45);color:var(--on-navy)}
-.btn.ghost:hover{background:rgba(255,255,255,.08)}
-.btn.outline{border-color:var(--line);color:var(--ink);background:var(--paper)}
-.row-btns{display:flex;gap:10px;flex-wrap:wrap}
-.links .btn.quote-nav{color:var(--on-navy);border-color:rgba(255,255,255,.45);background:transparent}
+a{color:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.eyebrow{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--lime);margin-bottom:14px}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.025em;margin:0;text-wrap:balance}
+h2{font-size:clamp(34px,4.6vw,58px);line-height:1.04}
+h2 em,h1 em{font-style:normal;color:var(--lime)}
+h3{font-size:22px;letter-spacing:-.01em;line-height:1.2}
+.lead{color:var(--muted);font-size:19px;max-width:62ch;margin:18px 0 0}
+section{padding:110px 0;position:relative}
+.btn{display:inline-flex;align-items:center;gap:10px;border-radius:99px;padding:14px 26px;font-weight:700;font-size:16px;text-decoration:none;border:1px solid transparent;cursor:pointer;font-family:var(--body);transition:transform .15s,background .15s,border-color .15s,color .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.btn.pri{background:var(--lime);color:var(--on-lime)}
+.btn.ghost{background:transparent;border-color:var(--line2);color:var(--txt)}
+.btn.ghost:hover{border-color:var(--lime);color:var(--lime)}
+.btn.sm{padding:9px 18px;font-size:14px}
 
-/* header + hero */
-.hero{background:var(--navy);color:var(--on-navy);overflow:hidden}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px;text-decoration:none;color:var(--on-navy)}
-.mark{width:38px;height:38px;border-radius:10px;background:var(--warm);color:var(--on-warm);display:grid;place-items:center;flex-shrink:0}
-.brand span b{color:var(--warm-light);font-weight:800}
-.links{display:flex;gap:4px 22px;flex-wrap:wrap;align-items:center;font-weight:600;font-size:15px}
-.links a{text-decoration:none;color:var(--on-navy-muted);padding:6px 0}
-.links a:hover{color:var(--on-navy)}
-.links .btn{min-height:42px;padding:8px 16px;font-size:15px;color:var(--on-warm)}
-.hero-grid{padding-block:clamp(32px,6vw,72px) 0}
-.hero h1{font-size:clamp(40px,6.4vw,74px);letter-spacing:-.025em;max-width:13ch}
-.hero h1 span{color:var(--warm-light)}
-.hero .sub{font-size:clamp(18px,2vw,21px);color:var(--on-navy-muted);max-width:54ch;margin-top:22px}
-.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
-.trades{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px}
-.trades span{border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:5px 14px;font-size:14px;color:var(--navy-soft)}
-.stage{position:relative;margin-top:56px}
-.stage .office{width:min(100%,900px);border-radius:14px 14px 0 0;box-shadow:0 30px 60px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);border-bottom:0}
-.stage .phone{position:absolute;right:0;bottom:-120px;width:clamp(150px,24vw,270px);border-radius:28px;border:8px solid #0d1b2e;box-shadow:0 30px 60px rgba(0,0,0,.45);background:var(--paper)}
-.stage .phone img{border-radius:20px}
-.hero-foot{height:120px}
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;padding:14px 0;transition:background .25s,border-color .25s;border-bottom:1px solid transparent}
+.nav.solid{background:rgba(13,10,31,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom-color:var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px;text-decoration:none;letter-spacing:-.02em}
+.brand b{color:var(--lime)}
+.links{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:99px;padding:5px 5px 5px 14px}
+.links a:not(.btn){color:var(--muted);text-decoration:none;font-size:14.5px;font-weight:600;padding:6px 10px;border-radius:99px}
+.links a:not(.btn):hover{color:var(--txt)}
+@media (max-width:900px){.links a:not(.btn){display:none}.links{padding:5px}}
 
-/* step-by-step services */
-.journey{display:flex;flex-direction:column;gap:clamp(56px,8vw,88px);margin-top:56px}
-.svc{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px 56px;align-items:center}
-.svc:nth-child(even) .svc-text{order:2}
-.svc-text{display:flex;flex-direction:column;gap:14px;min-width:0}
-.svc-head{display:flex;align-items:center;gap:14px}
-.num{width:44px;height:44px;border-radius:99px;background:var(--navy);color:var(--on-navy);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px;flex-shrink:0;font-variant-numeric:tabular-nums}
-.who{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.svc h3{font-size:clamp(23px,2.6vw,30px);letter-spacing:-.01em}
-.svc p{color:var(--muted);font-size:17px}
-.ticks{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
-.ticks li{display:flex;gap:10px;align-items:flex-start}
-.ticks li::before{content:"✓";flex-shrink:0;width:20px;height:20px;margin-top:2px;border-radius:99px;background:var(--warm-soft);color:var(--label);font-size:12px;font-weight:800;display:grid;place-items:center}
-.svc-pic{min-width:0}
-.screen{border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(58,23,196,.12);background:var(--paper)}
-.panel{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:32px 24px 0;display:flex;justify-content:center;overflow:hidden;max-height:560px}
-.panel img{width:min(100%,340px);border-radius:16px 16px 0 0;box-shadow:0 16px 40px rgba(24,33,43,.18);border:1px solid var(--line);border-bottom:0}
-.panel.phone img{width:min(100%,290px);border:7px solid #0d1b2e;border-bottom:0;border-radius:30px 30px 0 0}
-.band.soft .panel{background:var(--paper)}
-.panel.doc{max-height:none;padding-bottom:24px}
-.panel.doc img{width:min(100%,520px);border-radius:6px;border-bottom:1px solid var(--line)}
+/* hero */
+.hero{position:relative;padding:70px 0 40px;overflow:hidden}
+#globe{position:absolute;right:-8vw;top:-60px;width:min(900px,95vw);height:min(900px,95vw);pointer-events:none;opacity:.95}
+.hero .wrap{position:relative}
+.hero h1{font-size:clamp(46px,7.4vw,100px);line-height:.98;max-width:13ch;margin-top:8px}
+.hero .sub{color:var(--muted);font-size:clamp(18px,1.6vw,21px);max-width:54ch;margin:26px 0 0}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+.status{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:34px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.status span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--lime);margin-right:9px;box-shadow:0 0 10px var(--lime);vertical-align:1px}
+.stage{position:relative;margin-top:80px}
+.win{background:#0a0818;border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.55),0 0 80px rgba(124,92,255,.15)}
+.win .bar{height:38px;display:flex;align-items:center;gap:8px;padding:0 16px;background:#141030;border-bottom:1px solid var(--line)}
+.win .bar i{width:11px;height:11px;border-radius:50%;background:#2c2650}
+.win .bar b{margin-left:14px;font-family:var(--mono);font-weight:400;font-size:12px;color:var(--dim);background:#0d0a1f;border:1px solid var(--line);border-radius:7px;padding:3px 12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:60%}
+.stage .win{width:min(100%,960px)}
+.phone img{width:100%;height:auto;aspect-ratio:9/19;object-fit:cover;object-position:top}
+.phone{border:10px solid #05040c;border-radius:40px;overflow:hidden;background:#fff;box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px var(--line2)}
+.stage .phone{position:absolute;right:0;bottom:-50px;width:clamp(140px,19vw,250px)}
+.float{position:absolute;display:flex;gap:12px;align-items:center;background:rgba(23,18,47,.92);border:1px solid var(--line2);border-radius:16px;padding:12px 16px;box-shadow:0 20px 60px rgba(0,0,0,.5);backdrop-filter:blur(8px);font-size:14px;line-height:1.3}
+.float b{display:block;font-size:15px}.float small{color:var(--muted)}
+.float .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-weight:800;background:var(--lime);color:var(--on-lime);flex:none}
+.stage .f1{left:-10px;top:-30px}.stage .f2{right:clamp(160px,24vw,300px);bottom:20px}
+@media (max-width:700px){.stage .float{display:none}.stage{margin-top:56px}#globe{opacity:.45;top:40px}}
 
-/* store */
-.store-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 56px;align-items:end}
-.store-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:64px;margin-top:48px}
-.st{display:flex;flex-direction:column;gap:12px;min-width:0}
-.st .screen{max-width:100%}
-.st .screen img{width:100%;height:auto}
-.st h3{font-size:21px;margin-top:6px}
-.st p{color:var(--muted);font-size:17px;max-width:65ch}
-.store-note{margin-top:32px;display:flex;gap:12px 24px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:18px 24px}
-.store-note b{font-family:var(--display)}
-.store-note span{color:var(--muted)}
+/* businesses marquee */
+.marquee{border-block:1px solid var(--line);padding:18px 0;overflow:hidden;white-space:nowrap;margin-top:90px;position:relative}
+.marquee .track{display:inline-flex;gap:34px;animation:mq 38s linear infinite;font-family:var(--display);font-weight:700;font-size:22px;color:var(--muted)}
+.marquee .track span::before{content:"/";color:var(--violet);margin-right:34px}
+@keyframes mq{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.marquee .track{animation:none}}
 
-/* also included */
-.feat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 40px;margin-top:44px}
-.f{display:flex;gap:16px;align-items:flex-start;min-width:0}
-.f i{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--navy-soft);color:var(--navy);display:grid;place-items:center}
-.f b{display:block;font-family:var(--display);font-size:18px;margin-bottom:2px}
-.f span{color:var(--muted)}
-.pack{margin-top:44px;border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:24px 28px;display:flex;gap:16px 32px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.pack div{max-width:64ch;min-width:0}
-.pack b{font-family:var(--display);font-size:20px}
-.pack p{color:var(--muted);margin-top:4px}
-.pack .tag{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);background:var(--navy-soft);padding:8px 14px;border-radius:99px;white-space:nowrap}
+/* video */
+.vid{position:relative;margin-top:40px;border-radius:20px;overflow:hidden;border:1px solid var(--line2);background:#22107f;aspect-ratio:16/9;box-shadow:0 40px 120px rgba(0,0,0,.5)}
+.vid video{display:block;width:100%;height:100%}
+.vplay{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;border:0;border-radius:50%;background:var(--lime);color:var(--on-lime);display:grid;place-items:center;cursor:pointer;box-shadow:0 0 0 12px rgba(197,241,53,.15),0 20px 50px rgba(0,0,0,.5);transition:transform .2s}
+.vplay:hover{transform:scale(1.07)}
+.vid.playing .vplay{display:none}
+@media (max-width:600px){.vplay{width:72px;height:72px;margin:-36px 0 0 -36px}}
+.note{font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-top:14px;letter-spacing:.06em}
+.center{text-align:center}.center .lead{margin-left:auto;margin-right:auto}
 
-/* benefits */
-.ben{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px 28px;margin-top:44px}
-.b{border-top:4px solid var(--warm);padding-top:14px;min-width:0}
-.b b{display:block;font-family:var(--display);font-size:19px;margin-bottom:6px}
-.b span{color:var(--muted);font-size:15.5px}
+/* journey */
+.steps{display:flex;flex-direction:column;gap:22px;margin-top:56px}
+.step{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:40px;align-items:center;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:24px;padding:40px}
+.step:nth-child(even) .pic{order:-1}
+.step .tag{display:flex;gap:12px;align-items:center;font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.step .tag b{color:var(--lime);font-size:14px}
+.step h3{font-size:clamp(26px,2.6vw,34px);margin-top:14px}
+.step p{color:var(--muted);margin:14px 0 0}
+.ticks{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ticks li{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:15.5px;color:var(--txt)}
+.ticks li::before{content:"";width:18px;height:18px;margin-top:3px;border-radius:50%;background:var(--lime) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314102b' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L19 7'/%3E%3C/svg%3E") center/11px no-repeat}
+.pic{min-width:0}
+.pic.tall{display:flex;justify-content:center}
+.pic.tall .win{max-width:380px}
+.pic.tall .win img{max-height:560px;width:100%;object-fit:cover;object-position:top}
+.pic.tall .phone{width:250px}
+@media (max-width:860px){.step{grid-template-columns:minmax(0,1fr);padding:26px;gap:26px}.step:nth-child(even) .pic{order:0}}
+
+/* grids and cards */
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:48px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:48px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:48px}
+@media (max-width:1000px){.grid4,.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.grid4,.grid3,.grid2{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;min-width:0}
+.card p,.card span.d{color:var(--muted);font-size:15.5px;margin:10px 0 0;display:block}
+.card .win{margin-top:20px;border-radius:12px}
+.card .win .bar{height:28px}.card .win .bar i{width:8px;height:8px}
+.card .k{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);font-weight:700}
+.ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(124,92,255,.14);border:1px solid rgba(124,92,255,.35);color:#b9a6ff;margin-bottom:18px}
+.card h3{font-size:20px}
+.pack{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;margin-top:16px;background:linear-gradient(90deg,rgba(124,92,255,.18),rgba(197,241,53,.06));border:1px solid rgba(124,92,255,.35);border-radius:20px;padding:24px 28px}
+.pack p{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.pill{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--lime);color:var(--lime);border-radius:99px;padding:6px 14px;white-space:nowrap}
+.ben .card{padding:22px}
+.ben b{font-family:var(--display);font-size:19px;display:block}
+.ben .n{font-family:var(--mono);font-size:12px;color:var(--violet);font-weight:700;letter-spacing:.1em;display:block;margin-bottom:10px}
 
 /* comparison */
-.tblwrap{overflow-x:auto;margin-top:40px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
-table{width:100%;border-collapse:collapse;min-width:680px;font-size:15.5px}
-th{text-align:left;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:16px 18px;border-bottom:1px solid var(--line);vertical-align:bottom}
-td{padding:16px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl{margin-top:48px;overflow-x:auto;border:1px solid var(--line);border-radius:20px;background:var(--card)}
+table{width:100%;border-collapse:collapse;min-width:720px;font-size:15.5px}
+th,td{padding:16px 20px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700}
+td{color:var(--muted)}
+td:first-child{color:var(--txt);font-weight:600}
 tr:last-child td{border-bottom:0}
-td:first-child{font-weight:600}
-.us{background:var(--navy-soft);color:var(--navy)}
-td.us{font-weight:700}
-th.us{color:var(--navy);font-family:var(--display);font-size:16px;letter-spacing:0;text-transform:none}
-.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.us{background:rgba(197,241,53,.06);color:var(--lime)!important;font-weight:700}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
-/* try it */
-.try{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:32px;margin-top:44px;align-items:start}
-.card{border:1px solid var(--line);border-radius:16px;padding:28px;background:var(--paper);display:flex;flex-direction:column;gap:16px;min-width:0}
-.card h3{font-size:22px}
-.card .demo-img{border-radius:10px;border:1px solid var(--line);overflow:hidden}
-.side{display:flex;flex-direction:column;gap:24px;min-width:0}
-.list{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
-.person{font-family:var(--display);font-size:24px;font-weight:700;color:var(--navy)}
-.line-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.line-item strong{font-family:var(--display);font-size:20px;color:var(--navy);font-variant-numeric:tabular-nums;user-select:all;overflow-wrap:anywhere}
-.line-item small{color:var(--muted);font-weight:600}
-.copy{border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:8px;padding:6px 12px;font-weight:600;font-size:14px;cursor:pointer;min-height:36px;font-family:var(--body)}
-.status{color:var(--ok);font-size:14px;min-height:20px}
+/* micro invest */
+.mi{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:16px;margin-top:48px}
+@media (max-width:900px){.mi{grid-template-columns:minmax(0,1fr)}}
+.mi-big{background:radial-gradient(600px 400px at 85% 0%,rgba(124,92,255,.35),transparent 60%),var(--card);border:1px solid rgba(124,92,255,.35);border-radius:24px;padding:34px;min-width:0}
+.mi-big .num{font-family:var(--display);font-weight:800;font-size:clamp(72px,10vw,128px);line-height:.9;color:var(--lime);letter-spacing:-.04em}
+.mi-big .num small{font-size:.22em;color:var(--txt);letter-spacing:0;margin-left:10px;font-weight:700}
+.calc{margin-top:28px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:16px;padding:20px}
+.calc label{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.calc .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.calc input{flex:1;min-width:140px;background:#0d0a1f;border:1px solid var(--line2);border-radius:12px;color:var(--txt);font:700 20px var(--body);padding:12px 14px}
+.seg{display:flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--muted);font:700 15px var(--body);padding:0 16px;cursor:pointer;min-height:48px}
+.seg button[aria-pressed=true]{background:var(--lime);color:var(--on-lime)}
+.out{display:grid;grid-template-columns:1fr auto;gap:8px 16px;margin-top:18px;font-variant-numeric:tabular-nums}
+.out span{color:var(--muted)}.out b{text-align:right}
+.out .tot{border-top:1px solid var(--line2);padding-top:10px;color:var(--txt);font-weight:700}
+.out .tot+b{border-top:1px solid var(--line2);padding-top:10px;color:var(--lime);font-size:22px}
+.how{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:16px;counter-reset:s}
+.how li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:14px}
+.how li::before{content:"0" counter(s);font-family:var(--mono);font-weight:700;color:var(--lime);font-size:14px;border:1px solid rgba(197,241,53,.4);border-radius:10px;height:34px;display:grid;place-items:center}
+.how b{display:block;font-family:var(--display);font-size:17px}
+.how span{color:var(--muted);font-size:15px}
+.small{font-size:13.5px;color:var(--dim);margin-top:22px;max-width:100ch}
+.small a{color:var(--muted)}
+.who{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:15px}
+.who li::before{content:"→ ";color:var(--lime)}
 
-footer{background:var(--navy-deep);color:var(--on-navy-muted);font-size:14px}
-footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;padding-block:28px}
-footer b{color:var(--on-navy);font-family:var(--display)}
+/* contact */
+.contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:48px}
+@media (max-width:860px){.contact{grid-template-columns:minmax(0,1fr)}}
+.big-cta{background:radial-gradient(500px 340px at 0% 100%,rgba(197,241,53,.14),transparent 60%),radial-gradient(500px 340px at 100% 0%,rgba(124,92,255,.3),transparent 60%),var(--card);border:1px solid var(--line2);border-radius:24px;padding:36px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.big-cta h3{font-size:clamp(30px,3.4vw,44px);line-height:1.05}
+.li{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:16px;flex-wrap:wrap}
+.li strong{font-family:var(--display);font-size:22px;overflow-wrap:anywhere}
+.li small{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+.copy{background:transparent;border:1px solid var(--line2);color:var(--txt);border-radius:99px;padding:7px 14px;font:600 13px var(--body);cursor:pointer}
+.status-msg{font-size:14px;color:var(--lime);min-height:20px;margin:0}
+.early{list-style:none;padding:0;margin:4px 0 0;display:flex;flex-direction:column;gap:12px}
+.early li{display:grid;grid-template-columns:22px 1fr;gap:10px;color:var(--muted)}
+.early li::before{content:"✦";color:var(--lime)}
 
-@media (max-width:960px){
-  .ben{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .feat{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (max-width:860px){
-  .svc,.try,.store-intro{grid-template-columns:minmax(0,1fr)}
-  .svc:nth-child(even) .svc-text{order:0}
-  
-  .stage .phone{bottom:-80px;right:4px}
-  .hero-foot{height:90px}
-}
-@media (max-width:560px){
-  .links a:not(.btn){display:none}
-  .ben,.feat{grid-template-columns:minmax(0,1fr)}
-  .stage{margin-top:72px}
-  .stage .phone{border-width:5px;border-radius:20px}
-  .stage .phone img{border-radius:15px}
-  .panel{padding:22px 16px 0;max-height:440px}
-}
-/* product video */
-.vid{position:relative;max-width:1080px;margin:28px auto 0;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px rgba(20,16,48,.25);background:#22107f;aspect-ratio:16/9}
-.vid video{display:block;width:100%;height:100%}
-.vid-note{text-align:center;margin-top:14px;color:var(--muted,#5b6672);font-size:15px}
-#watch .wrap{text-align:center}#watch .h2,#watch .lead{margin-left:auto;margin-right:auto}
-.vplay{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border:0;border-radius:50%;background:#c5f135;color:#1a1240;display:grid;place-items:center;cursor:pointer;box-shadow:0 14px 40px rgba(8,4,40,.45);transition:transform .2s}
-.vplay:hover,.vplay:focus-visible{transform:scale(1.08)}.vplay:focus-visible{outline:3px solid #fff;outline-offset:4px}
-.vid.playing .vplay{display:none}
-@media (max-width:600px){.vplay{width:76px;height:76px;margin:-38px 0 0 -38px}.vplay svg{width:28px;height:28px}}
+footer{border-top:1px solid var(--line);padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--dim);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+footer a{color:var(--muted)}
+
+/* gentle reveal: visible by default; only animated when JS runs */
+.js .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.js .rv{opacity:1;transform:none;transition:none}}
 </style>
-
 </head>
 <body>
-<header class="hero">
+<header class="nav" id="nav">
   <div class="wrap">
-    <nav class="nav" aria-label="Main">
-      <a class="brand" href="#top" id="top"><span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></span><span>SiteTo<b>Fit</b></span></a>
-      <div class="links">
-        <a href="#how">Step by step</a>
-        <a href="#store">The Store</a>
-        <a href="#included">Also included</a>
-        <a href="#why">Why us</a>
-        <a href="#microinvest">Micro Invest</a>
-        <a class="btn ghost quote-nav" href="#quote" data-quote>Ask for a quote</a>
-        <a class="btn pri" href="#try">Try the demo</a>
-      </div>
+    <a class="brand" href="#top" aria-label="SiteToFit, back to top"><svg width="30" height="30" viewBox="0 0 200 200" fill="none" aria-hidden="true"><path d="M138 52 C 70 40, 42 78, 82 98 C 124 118, 150 140, 104 160 C 92 165, 80 166, 66 165" stroke="#c5f135" stroke-width="15" stroke-linecap="round" stroke-dasharray="1 26"/><path d="M138 8 C 120 8 108 21 108 37 C 108 58 138 82 138 82 C 138 82 168 58 168 37 C 168 21 156 8 138 8 Z" fill="#c5f135"/><circle cx="138" cy="37" r="10.5" fill="#0d0a1f"/><circle cx="52" cy="165" r="31" fill="#c5f135"/><path d="M38 165 L48 175 L67 155" stroke="#0d0a1f" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SiteTo<b>Fit</b></span></a>
+    <nav class="links" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#store">Store</a>
+      <a href="#included">Features</a>
+      <a href="#why">Why us</a>
+      <a href="#microinvest">Micro Invest</a>
+      <a class="btn pri sm" href="#quote" data-quote>Book a call</a>
     </nav>
-    <div class="hero-grid">
-      <h1>From first visit to finished job. <span>One app.</span></h1>
-      <p class="sub">For companies that sell, measure and install. Your office, your salespeople, your store and your installer teams on the same page, on any phone or computer.</p>
-      <div class="cta">
-        <a class="btn pri" href="demo/">Open the live demo</a>
-        <a class="btn ghost" href="#how">See what you get, step by step</a>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero" aria-labelledby="hero-h">
+  <canvas id="globe" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="eyebrow">All-in-one CRM · Made in Malta</div>
+    <h1 id="hero-h">From first visit to finished job. <em>One app.</em></h1>
+    <p class="sub">Enquiries, site visits, contracts, jobs, your store and your teams, shaped around how your business works. Your office, your salespeople and your people on site on the same page, on any phone or computer.</p>
+    <div class="cta">
+      <a class="btn pri" href="/tour/">Try the live demo <span aria-hidden="true">→</span></a>
+      <a class="btn ghost" href="#watch">Watch the 1-minute video</a>
+    </div>
+    <div class="status"><span>Free one-month trial</span><span>Set up for you in a day</span><span>Up to 65% back through Micro Invest*</span></div>
+
+    <div class="stage">
+      <div class="win"><div class="bar"><i></i><i></i><i></i><b>siteto.fit/c/your-company</b></div><img src="img/jobs.webp" alt="The office screen: the jobs calendar showing which team goes where this week" width="1400" height="836"></div>
+      <div class="phone"><img src="img/phone.webp" alt="A team member's phone: today's job with the address, directions, materials and photo boxes" width="600" height="1477"></div>
+      <div class="float f1"><span class="ic">f</span><div><b>New enquiry from Facebook</b><small>Sarah Camilleri · Sliema</small></div></div>
+      <div class="float f2"><span class="ic">✓</span><div><b>Job done · 12 photos</b><small>Team A · Mark Vella</small></div></div>
+    </div>
+  </div>
+  <div class="marquee" aria-label="Businesses it works for"><div class="track"><span>Kitchens &amp; wardrobes</span><span>Aluminium &amp; windows</span><span>Air conditioning</span><span>Curtains &amp; blinds</span><span>CCTV &amp; alarms</span><span>Flooring</span><span>Solar</span><span>Cleaning &amp; maintenance</span><span aria-hidden="true">Kitchens &amp; wardrobes</span><span aria-hidden="true">Aluminium &amp; windows</span><span aria-hidden="true">Air conditioning</span><span aria-hidden="true">Curtains &amp; blinds</span><span aria-hidden="true">CCTV &amp; alarms</span><span aria-hidden="true">Flooring</span><span aria-hidden="true">Solar</span><span aria-hidden="true">Cleaning &amp; maintenance</span></div></div>
+</section>
+
+<section id="watch" aria-labelledby="watch-h">
+  <div class="wrap center rv">
+    <div class="eyebrow">Watch it in a minute</div>
+    <h2 id="watch-h">See how SiteToFit runs a job, <em>from first enquiry to paid.</em></h2>
+    <div class="vid"><video controls playsinline preload="none" poster="video/poster.webp" aria-label="SiteToFit product video, about one minute, no sound"><source src="video/sitetofit-product-video.mp4" type="video/mp4"></video><button class="vplay" type="button" aria-label="Play the video"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button></div>
+    <p class="note">1 MIN 11 S · NO SOUND</p>
+  </div>
+</section>
+
+<section id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">What you get, step by step</div>
+      <h2 id="how-h">Follow one job from the first call <em>to the money in the bank.</em></h2>
+      <p class="lead">Everything your subscription covers, in the order a job happens. Every step is a screen in the app, and everyone sees where each job stands: the office, the salespeople, the store and the team on site.</p>
+    </div>
+    <div class="steps">
+      <article class="step rv"><div><div class="tag"><b>01</b>Office &amp; salespeople</div><h3>An enquiry comes in</h3><p>Every enquiry goes into one list with its next step: call back, send a quote or book a visit. Your salespeople get the same list on their phone.</p><ul class="ticks"><li>The next step and date on every enquiry</li><li>Reminders on the phone before each appointment</li><li>A sales app for your salespeople to log new sales and documents</li></ul></div><div class="pic"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Leads &amp; calendar</b></div><img src="img/leads.webp" alt="Leads and calendar screen listing enquiries with their next step" width="1400" height="836" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>02</b>Salesperson or office</div><h3>The site visit</h3><p>Book the visit, go and measure, then mark it done with your notes. Pending and done visits sit on one screen, so none are forgotten.</p><ul class="ticks"><li>Visit date and status for every client</li><li>Measurements and access notes saved to the client</li><li>Photos and drawings kept with the visit</li></ul></div><div class="pic"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Site visits</b></div><img src="img/visits.webp" alt="Site visits screen with pending and done visits" width="1400" height="865" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>03</b>Office</div><h3>Turn the visit into a job</h3><p>One tap creates the job. Pick the team, the date and the materials, and choose the items it needs from your store.</p><ul class="ticks"><li>See how many of each item are available as you choose</li><li>Store items are kept aside for this job the moment it's created</li><li>The job appears on the calendar and the team's phone</li></ul></div><div class="pic tall"><div class="win"><div class="bar"><i></i><i></i><i></i><b>New job</b></div><img src="img/newjob.webp" alt="New job form with team, date, materials and items from the store" width="640" height="1027" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>04</b>Store keeper</div><h3>The store gets the materials ready</h3><p>Your store keeper has their own app with the day's deliveries. They scan each item out as it leaves, so you always know what went to which client.</p><ul class="ticks"><li>A delivery list for each job, by date and team</li><li>Every item scanned out with a handheld scanner or the phone camera</li><li>Every serial number linked to the client, ready for warranty</li></ul></div><div class="pic"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Store · deliveries</b></div><img src="img/store-deliv.webp" alt="Store deliveries screen with jobs waiting to be scanned out" width="1400" height="836" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>05</b>Team on site</div><h3>The team does the job on their phone</h3><p>Each team sees only its own jobs: the address with directions, the work to do, the materials and any note from the office. They take photos in the boxes you set, then press Job done.</p><ul class="ticks"><li>Photo boxes you choose for each type of work, with no limit on photos</li><li>A job can't be finished without photos</li><li>The office gets an alert when the job is done</li></ul></div><div class="pic tall"><div class="phone"><img src="img/phone.webp" alt="A team's job on a phone with directions, materials and photo boxes" width="600" height="1477" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>06</b>Team on site</div><h3>Get paid on the day</h3><p>When the job is finished, the team sees exactly what's still to pay. They record the payment on the spot and send the client a proper PDF invoice from their phone.</p><ul class="ticks"><li>Cash, cheque, bank transfer, Revolut or card</li><li>A photo of the cheque or receipt, kept with the job</li><li>A numbered PDF invoice with your logo, VAT and bank details, sent by WhatsApp or email</li><li>The office confirms each payment when the money arrives</li></ul></div><div class="pic tall"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Invoice · PDF</b></div><img src="img/invoice.webp" alt="A PDF invoice with the company logo, VAT breakdown, payments received and balance due" width="700" height="735" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>07</b>Office</div><h3>Check the photos and close the job</h3><p>Open the alert and look at the photos of each stage. If you're happy, press Installed and the job is closed.</p><ul class="ticks"><li>Photos sorted by stage: before, during and finished</li><li>Download all the photos of a job in one file for warranty or disputes</li><li>Every finished job kept with its client</li></ul></div><div class="pic tall"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Job done · check photos</b></div><img src="img/check.webp" alt="Checking the photos of a finished job before pressing Installed" width="640" height="896" loading="lazy"></div></div></article>
+      <article class="step rv"><div><div class="tag"><b>08</b>Office</div><h3>Collect the money</h3><p>Once the job is finished, any balance left moves to Money to collect. You see who still owes you and how much, without digging through files.</p><ul class="ticks"><li>Payments taken on site, waiting for your confirmation</li><li>Every balance still owed, in one list</li><li>One tap sends a polite WhatsApp reminder with your bank details</li></ul></div><div class="pic"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Money to collect</b></div><img src="img/money.webp" alt="Money to collect screen with balances still owed and WhatsApp reminder buttons" width="1400" height="836" loading="lazy"></div></div></article>
+    </div>
+  </div>
+</section>
+
+<section id="store" aria-labelledby="store-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">The Store</div>
+      <h2 id="store-h">Know what's in stock, what's kept for jobs <em>and what to order.</em></h2>
+      <p class="lead">Behind every job is your store. SiteToFit keeps it up to date as items come in and go out, so a team never turns up short.</p>
+    </div>
+    <div class="grid2">
+      <div class="card rv"><div class="k">Stock in</div><h3 style="margin-top:8px">Scan items in as they arrive</h3><p>Appliances are scanned one by one by their serial barcode. For fixings like hinges, scan the box and type how many.</p><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="img/store-in.webp" alt="Stock in screen for scanning new items into the store" loading="lazy"></div></div>
+      <div class="card rv"><div class="k">Stock out</div><h3 style="margin-top:8px">Every item linked to its client</h3><p>Each job's materials wait in a delivery list by date and team. On the day, the store keeper scans every item out.</p><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="img/store-out.webp" alt="Stock out screen with the day's deliveries waiting to be scanned out" width="1200" height="794" loading="lazy"></div></div>
+      <div class="card rv"><div class="k">Stock</div><h3 style="margin-top:8px">In store, kept for jobs, available</h3><p>For every product, at a glance. Type or scan a serial number to see where it went. Stock take included.</p><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="img/store-stock.webp" alt="Stock screen showing what's in the store, kept for jobs and available" loading="lazy"></div></div>
+      <div class="card rv"><div class="k">To order</div><h3 style="margin-top:8px">What to buy before you run short</h3><p>What to order so every booked job is covered, and which job would be short without it. Items below your warning level are flagged.</p><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="img/store-order.webp" alt="To order screen listing what to order to cover every booked job" loading="lazy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="included" aria-labelledby="inc-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Also included</div>
+      <h2 id="inc-h">Everything else <em>your company runs on.</em></h2>
+    </div>
+    <div class="grid3">
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></div><h3>Dashboard</h3><p>What needs you today: jobs to check, visits to book and money to collect.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h12"/></svg></div><h3>Jobs calendar</h3><p>Which team goes where, today and this week. Jobs for any work, not only big projects.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-5.6"/></svg></div><h3>Clients in one place</h3><p>Phone, email, every visit, job, photo and payment, when a client calls.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 15l2 2 5-5"/></svg></div><h3>Digital contracts</h3><p>Your own contract, filled in by itself and signed on the phone or by emailed link. Optional pack.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>Rota, leave &amp; payroll</h3><p>Shifts drafted for you, clock in and out on the phone, payslips emailed as PDFs. Optional pack.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><h3>Targets &amp; monthly report</h3><p>Sales per salesperson against target, and a one-page monthly PDF report.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2a2 2 0 0 0 0-4"/></svg></div><h3>Your name, logo and colours</h3><p>Your own page, your job types and your photo boxes, set up for you.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="11" rx="1.5"/><rect x="16" y="9" width="6" height="11" rx="1.5"/><path d="M6 19h6"/></svg></div><h3>Any phone or computer</h3><p>Works in any browser or as an Android app. Nothing to install on your computers.</p></div>
+      <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div><h3>Help, any time</h3><p>The Help assistant answers questions day or night, and passes anything else to our support team.</p></div>
+    </div>
+    <div class="pack rv"><div><b style="font-family:var(--display);font-size:20px">Trade packs</b><p>Extra screens for a trade. The Solar pack adds REWS grants, Part B deadlines and reading grant offer letters. More packs as new trades join.</p></div><span class="pill">Pay only for what you use</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="ben-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">How it helps your company</div>
+      <h2 id="ben-h">Fewer phone calls, fewer mistakes, <em>faster payment.</em></h2>
+    </div>
+    <div class="grid4 ben">
+      <div class="card rv"><span class="n">01</span><b>Nothing falls through</b><span class="d">Every visit and job has a status. You see what's pending without asking anyone.</span></div>
+      <div class="card rv"><span class="n">02</span><b>Teams leave ready</b><span class="d">The address, materials and site notes are on their phone before they set off.</span></div>
+      <div class="card rv"><span class="n">03</span><b>Never short on site</b><span class="d">Materials are kept aside when the job is booked, and you see what to order in time.</span></div>
+      <div class="card rv"><span class="n">04</span><b>Every serial traced</b><span class="d">Each appliance that leaves the store is linked to the client it went to.</span></div>
+      <div class="card rv"><span class="n">05</span><b>Proof on every job</b><span class="d">Photos of each stage, ready for warranty claims, disputes or your own checks.</span></div>
+      <div class="card rv"><span class="n">06</span><b>Get paid sooner</b><span class="d">Balances are listed when a job is finished, and a reminder is one tap away.</span></div>
+      <div class="card rv"><span class="n">07</span><b>Less WhatsApp chaos</b><span class="d">Job details stop living in group chats and personal phones.</span></div>
+      <div class="card rv"><span class="n">08</span><b>Start in a day</b><span class="d">We set up your job types and photo boxes for you, so your teams can start straight away.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="why" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Why choose us</div>
+      <h2 id="why-h">Built for how local companies <em>actually work.</em></h2>
+    </div>
+    <div class="tbl rv">
+      <table>
+        <thead><tr><th scope="col"><span class="vh">Feature</span></th><th scope="col">Excel, paper &amp; WhatsApp</th><th scope="col">Big international apps</th><th scope="col" class="us">SiteToFit</th></tr></thead>
+        <tbody>
+          <tr><td>Enquiry → visit → job → paid in one flow</td><td>Spread over many places</td><td>Yes, often built for other trades</td><td class="us">Yes, shaped around your business</td></tr>
+          <tr><td>App for your teams with photo boxes</td><td>Photos lost in chats</td><td>Depends on the plan</td><td class="us">Included, no photo limit</td></tr>
+          <tr><td>Payment and invoice on the day</td><td>Paper receipts</td><td>Depends on the plan</td><td class="us">Included, from the team's phone</td></tr>
+          <tr><td>Store, stock &amp; what to order</td><td>Counted by hand</td><td>Depends on the plan</td><td class="us">Included, linked to every job</td></tr>
+          <tr><td>Maltese numbers &amp; WhatsApp reminders</td><td>By hand</td><td>Not made for Malta</td><td class="us">Built in</td></tr>
+          <tr><td>Your logo and colours</td><td>–</td><td>Depends on the plan</td><td class="us">Included</td></tr>
+          <tr><td>Malta grant paperwork (Solar pack)</td><td>By hand</td><td>No</td><td class="us">Yes</td></tr>
+          <tr><td>Support</td><td>–</td><td>Overseas, by ticket</td><td class="us">Local, in Malta</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="microinvest" aria-labelledby="mi-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Malta Enterprise · Micro Invest 2026–2030</div>
+      <h2 id="mi-h">Get up to 65% of your first year back <em>as a tax credit.</em></h2>
+      <p class="lead">Under Malta Enterprise's Micro Invest scheme, software you subscribe to online (SaaS), like SiteToFit, counts as a digital investment. If your company qualifies, the setup and your first 12 months can earn a tax credit of 65%, or 85% if you operate from Gozo.</p>
+    </div>
+    <div class="mi">
+      <div class="mi-big rv">
+        <div class="num">65%<small>back as a tax credit*</small></div>
+        <div class="calc">
+          <label for="mi-amt">Setup + first 12 months (€, excl. VAT)</label>
+          <div class="row"><input id="mi-amt" type="number" min="0" step="50" value="1000" inputmode="numeric"><div class="seg" role="group" aria-label="Where you operate"><button type="button" id="mi-mt" aria-pressed="true">Malta</button><button type="button" id="mi-gz" aria-pressed="false">Gozo</button></div></div>
+          <div class="out" aria-live="polite"><span>You invest</span><b id="mi-a">€1,000</b><span id="mi-rl">Tax credit at 65%</span><b id="mi-c">− €650</b><span class="tot">What it really costs you</span><b id="mi-r">€350</b></div>
+        </div>
+        <div class="cta" style="margin-top:24px"><a class="btn pri" href="#quote" data-quote data-topic="microinvest">Request a call back and a quote</a></div>
       </div>
-      <a class="mi-badge" href="#microinvest"><b>Micro Invest</b> Up to 65% of your first year back as a tax credit <span aria-hidden="true">→</span></a>
-      <div class="trades" aria-label="Trades it works for"><span>Kitchens &amp; wardrobes</span><span>Aluminium &amp; windows</span><span>Air conditioning</span><span>Curtains &amp; blinds</span><span>CCTV &amp; alarms</span><span>Flooring</span><span>Solar</span></div>
-      <div class="stage">
-        <img class="office" src="img/jobs.webp" alt="The office screen: the installations calendar showing which team goes where this week" width="1400" height="836">
-        <div class="phone"><img src="img/phone.webp" alt="The installer's phone: today's job with the address, directions, materials and photo boxes" width="600" height="1477"></div>
+      <div class="card rv">
+        <h3>How it works</h3>
+        <ol class="how">
+          <li><div><b>Ask us to call you back</b><span>Tell us about your company and we'll prepare a quote that fits your team.</span></div></li>
+          <li><div><b>Try it free for a month</b><span>Your own page with your logo, and your job types and photo boxes set up for you.</span></div></li>
+          <li><div><b>Keep going with one invoice</b><span>Setup and your first 12 months on one invoice, so it meets the scheme's €500 minimum per invoice.</span></div></li>
+          <li><div><b>Your accountant claims the credit</b><span>They apply to Malta Enterprise for you. Claims for 2026 costs open on 1 January 2027, and the credit comes off the tax on your profits.</span></div></li>
+        </ol>
+        <h3 style="font-size:17px;margin-top:24px">Who can claim</h3>
+        <ul class="who"><li>Companies, partnerships and self-employed people in Malta and Gozo</li><li>With at least 1 and up to 50 full-time employees</li><li>Registered for VAT</li></ul>
+      </div>
+    </div>
+    <p class="small">*Micro Invest is run by Malta Enterprise, and every claim is subject to their approval and the scheme's rules. Renewals after the first year don't qualify. Each company can claim up to €65,000 over three years (€85,000 for Gozo, family and female-owned businesses). We're not tax advisers, so please check with your accountant how it applies to you. Details on <a href="https://www.maltaenterprise.com" target="_blank" rel="noopener">maltaenterprise.com</a>.</p>
+  </div>
+</section>
+
+<section id="try" aria-labelledby="try-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Get started</div>
+      <h2 id="try-h">Tell us what's <em>slowing you down.</em></h2>
+      <p class="lead">Try the live demo on a sample company, or ask for a demo at your office. One of our salespeople will get in touch, usually within one working day.</p>
+    </div>
+    <div class="contact">
+      <div class="big-cta rv">
+        <h3>Try it free for a month.</h3>
+        <ul class="early"><li>Your own page with your logo, set up for you</li><li>Your job types, steps and photo boxes ready on day one</li><li>Switch on only the parts you need</li><li>Up to 65% of your first year back through Micro Invest, if your company qualifies</li></ul>
+        <div class="cta" style="margin-top:6px"><a class="btn pri" href="#quote" data-quote>Book a call</a><a class="btn ghost" href="/tour/">Try the live demo</a></div>
+      </div>
+      <div class="card rv" id="contact" style="display:flex;flex-direction:column;gap:16px;padding:32px">
+        <h3>Talk to us</h3>
+        <p style="margin:0">Ask for a demo at your office or send your feedback, and one of our salespeople will get in touch.</p>
+        <div class="li"><div><small>Phone &amp; WhatsApp</small><br><strong>7932 3756</strong></div><a class="btn ghost sm" href="https://wa.me/35679323756" target="_blank" rel="noopener">Message on WhatsApp</a></div>
+        <div class="li"><div><small>Email</small><br><strong id="c-email">sitetofit@gmail.com</strong></div><button class="copy" id="copy-email" type="button">Copy</button></div>
+        <p class="status-msg" id="copy-status" role="status"></p>
       </div>
     </div>
   </div>
-  <div class="hero-foot" aria-hidden="true"></div>
-</header>
-
-<main>
-  <section class="band" id="watch" aria-labelledby="watch-h">
-    <div class="wrap">
-      <div class="eyebrow">Watch it in a minute</div>
-      <h2 class="h2" id="watch-h">See how SiteToFit runs a job, from first enquiry to paid</h2>
-      <div class="vid"><video controls playsinline preload="none" poster="video/poster.webp" aria-label="SiteToFit product video, about one minute, no sound"><source src="video/sitetofit-product-video.mp4" type="video/mp4"></video><button class="vplay" type="button" aria-label="Play the video"><svg width="38" height="38" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button></div>
-      <p class="vid-note">1 minute 11 seconds · no sound</p>
-      <script>(function(){var w=document.querySelector('#watch .vid'),v=w.querySelector('video'),b=w.querySelector('.vplay');b.addEventListener('click',function(){v.play();});v.addEventListener('play',function(){w.classList.add('playing');});v.addEventListener('ended',function(){w.classList.remove('playing');});})();</script>
-    </div>
-  </section>
-
-  <section class="band" id="how" aria-labelledby="how-h">
-    <div class="wrap">
-      <div class="eyebrow">What you get, step by step</div>
-      <h2 class="h2" id="how-h">Follow one job from the first call to the money in the bank</h2>
-      <p class="lead">This is everything your subscription covers, in the order a job happens. Every step is a screen in the app, and everyone sees where each job stands: the office, the salespeople, the store and the team on site.</p>
-
-      <div class="journey">
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">1</span><span class="who">Office &amp; salespeople</span></div>
-            <h3>An enquiry comes in</h3>
-            <p>Every enquiry goes into one list with its next step: call back, send a quote or book a visit. Your salespeople get the same list on their phone.</p>
-            <ul class="ticks"><li>The next step and date on every enquiry</li><li>Reminders on the phone before each appointment</li><li>A sales app for your salespeople to log new sales and documents</li></ul>
-          </div>
-          <div class="svc-pic"><div class="screen"><img src="img/leads.webp" alt="Leads and calendar screen listing enquiries with their next step" width="1400" height="836"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">2</span><span class="who">Salesperson or office</span></div>
-            <h3>The site visit</h3>
-            <p>Book the visit, go and measure, then mark it done with your notes. Pending and done visits sit on one screen, so none are forgotten.</p>
-            <ul class="ticks"><li>Visit date and status for every client</li><li>Measurements and access notes saved to the client</li><li>Photos and drawings kept with the visit</li></ul>
-          </div>
-          <div class="svc-pic"><div class="screen"><img src="img/visits.webp" alt="Site visits screen with pending and done visits" width="1400" height="865"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">3</span><span class="who">Office</span></div>
-            <h3>Turn the visit into a job</h3>
-            <p>One tap creates the job. Pick the team, the date and the materials, and choose the items it needs from your store.</p>
-            <ul class="ticks"><li>See how many of each item are available as you choose</li><li>Store items are kept aside for this job the moment it's created</li><li>The job appears on the installations calendar and the team's phone</li></ul>
-          </div>
-          <div class="svc-pic"><div class="panel"><img src="img/newjob.webp" alt="New job form with team, date, materials and items from the store" width="640" height="1027"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">4</span><span class="who">Store keeper</span></div>
-            <h3>The store gets the materials ready</h3>
-            <p>Your store keeper has their own app with the day's deliveries. They scan each item out as it leaves, so you always know what went to which client.</p>
-            <ul class="ticks"><li>A delivery list for each job, by date and team</li><li>Every item scanned out with a handheld scanner or the phone camera</li><li>Every serial number linked to the client, ready for warranty</li></ul>
-          </div>
-          <div class="svc-pic"><div class="screen"><img src="img/store-deliv.webp" alt="Store deliveries screen with jobs waiting to be scanned out" width="1400" height="836"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">5</span><span class="who">Installer team</span></div>
-            <h3>The team does the job on their phone</h3>
-            <p>Each team sees only its own jobs: the address with directions, the work to do, the materials and any note from the office. They take photos in the boxes you set, then press Job done.</p>
-            <ul class="ticks"><li>Photo boxes you choose for each type of work, with no limit on photos</li><li>A job can't be finished without photos</li><li>The office gets an alert when the job is done</li></ul>
-          </div>
-          <div class="svc-pic"><div class="panel phone"><img src="img/phone.webp" alt="The installer's job on a phone with directions, materials and photo boxes" width="600" height="1477"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">6</span><span class="who">Installer team</span></div>
-            <h3>Get paid on the day</h3>
-            <p>When the job is finished, the team sees exactly what's still to pay. They record the payment on the spot and send the client a proper PDF invoice from their phone.</p>
-            <ul class="ticks"><li>Cash, cheque, bank transfer or Revolut, or card</li><li>A photo of the cheque or receipt, kept with the job</li><li>A numbered PDF invoice with your logo, VAT and bank details, sent by WhatsApp or email</li><li>The office confirms each payment when the money reaches them</li></ul>
-          </div>
-          <div class="svc-pic"><div class="panel doc"><img src="img/invoice.webp" alt="A PDF invoice with the company logo, VAT breakdown, payments received and balance due" width="700" height="735"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">7</span><span class="who">Office</span></div>
-            <h3>You check the photos and close the job</h3>
-            <p>Open the alert and look at the photos of each stage. If you're happy, press Installed and the job is closed.</p>
-            <ul class="ticks"><li>Photos sorted by stage: before, during and finished</li><li>Download all the photos of a job in one file for warranty or disputes</li><li>Every installed job kept with its client</li></ul>
-          </div>
-          <div class="svc-pic"><div class="panel"><img src="img/check.webp" alt="Checking the photos of a finished job before pressing Installed" width="640" height="896"></div></div>
-        </article>
-
-        <article class="svc">
-          <div class="svc-text">
-            <div class="svc-head"><span class="num">8</span><span class="who">Office</span></div>
-            <h3>Collect the money</h3>
-            <p>Once the job is installed, any balance left moves to Money to collect. You see who still owes you and how much, without digging through files.</p>
-            <ul class="ticks"><li>Payments taken on site, waiting for your confirmation</li><li>Every balance still owed, in one list</li><li>One tap sends a polite WhatsApp reminder</li><li>Your bank details included in the reminder</li></ul>
-          </div>
-          <div class="svc-pic"><div class="screen"><img src="img/money.webp" alt="Money to collect screen with balances still owed and WhatsApp reminder buttons" width="1400" height="836"></div></div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="band soft" id="store" aria-labelledby="store-h">
-    <div class="wrap">
-      <div class="store-intro">
-        <div>
-          <div class="eyebrow">The Store</div>
-          <h2 class="h2" id="store-h">Know what's in stock, what's kept for jobs and what to order</h2>
-        </div>
-        <p class="lead">Behind every job is your store. SiteToFit keeps it up to date as items come in and go out, so a team never turns up short.</p>
-      </div>
-      <div class="store-grid">
-        <div class="st">
-          <h3>Stock in</h3>
-          <p>Scan items in as they arrive. Appliances are scanned one by one by their serial barcode. For fixings like hinges, scan the box and type how many.</p>
-          <div class="screen"><img src="img/store-in.webp" alt="Stock in screen for scanning new items into the store"></div>
-        </div>
-        <div class="st">
-          <h3>Stock out</h3>
-          <p>Each job's materials wait in a delivery list by date and team. On the day, the store keeper scans every item out, and each serial number is linked to the client it went to.</p>
-          <div class="screen"><img src="img/store-out.webp" alt="Stock out screen with the day's deliveries waiting to be scanned out" width="1200" height="794"></div>
-        </div>
-        <div class="st">
-          <h3>Stock</h3>
-          <p>For every product: how many are in the store, how many are kept for jobs, and how many are free to use. Type or scan a serial number to see where it went.</p>
-          <div class="screen"><img src="img/store-stock.webp" alt="Stock screen showing what's in the store, kept for jobs and available"></div>
-        </div>
-        <div class="st">
-          <h3>To order</h3>
-          <p>What to order so every booked job is covered, and which job would be short without it. Items below your warning level are flagged too.</p>
-          <div class="screen"><img src="img/store-order.webp" alt="To order screen listing what to order to cover every booked job"></div>
-        </div>
-      </div>
-      <div class="store-note"><b>Also in the Store</b><span>Stock take: scan every shelf and see what's missing. Notes for the store keeper.</span></div>
-    </div>
-  </section>
-
-  <section class="band" id="included" aria-labelledby="inc-h">
-    <div class="wrap">
-      <div class="eyebrow">Also included</div>
-      <h2 class="h2" id="inc-h">Everything else your company runs on</h2>
-      <div class="feat">
-        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></i><div><b>Dashboard</b><span>Each morning: jobs today, visits to book, money to collect, and alerts for finished jobs.</span></div></div>
-        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg></i><div><b>Installations calendar</b><span>Which team goes where, today and this week. Jobs for any work, not only big projects.</span></div></div>
-        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-5.6"/></svg></i><div><b>Clients in one place</b><span>Phone, email, every visit, job, photo and payment, when a client calls.</span></div></div>
-        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></i><div><b>Targets &amp; monthly report</b><span>Sales per salesperson against target, and a one-page monthly PDF report.</span></div></div>
-        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2a2 2 0 0 0 0-4"/></svg></i><div><b>Your name, logo and colours</b><span>Your team and clients see your company, on your own page address.</span></div></div>
-        <div class="f"><i aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="11" rx="1.5"/><rect x="16" y="9" width="6" height="11" rx="1.5"/><path d="M6 19h6"/></svg></i><div><b>Any phone or computer</b><span>Works in any phone browser or as an Android app. Nothing to install in the office.</span></div></div>
-      </div>
-      <div class="pack">
-        <div><b>Trade packs</b><p>Extra screens for a trade. The Solar pack adds REWS grants, Part B deadlines and reading grant offer letters. More packs as new trades join.</p></div>
-        <span class="tag">Pay only for what you use</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="band soft" aria-labelledby="ben-h">
-    <div class="wrap">
-      <div class="eyebrow">How it helps your company</div>
-      <h2 class="h2" id="ben-h">Fewer phone calls, fewer mistakes, faster payment</h2>
-      <div class="ben">
-        <div class="b"><b>Nothing falls through</b><span>Every visit and job has a status. You see what's pending without asking anyone.</span></div>
-        <div class="b"><b>Teams leave ready</b><span>The address, materials and site notes are on their phone before they set off.</span></div>
-        <div class="b"><b>Never short on site</b><span>Materials are kept aside when the job is booked, and you see what to order in time.</span></div>
-        <div class="b"><b>Every serial traced</b><span>Each appliance that leaves the store is linked to the client it went to.</span></div>
-        <div class="b"><b>Proof on every job</b><span>Photos of each stage, ready for warranty claims, disputes or your own checks.</span></div>
-        <div class="b"><b>Get paid sooner</b><span>Balances are listed when a job is installed, and a reminder is one tap away.</span></div>
-        <div class="b"><b>Less WhatsApp chaos</b><span>Job details stop living in group chats and personal phones.</span></div>
-        <div class="b"><b>Start in a day</b><span>We set up your job types and photo boxes for you, so your teams can start straight away.</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="band" id="why" aria-labelledby="why-h">
-    <div class="wrap">
-      <div class="eyebrow">Why choose us</div>
-      <h2 class="h2" id="why-h">Built for how local installation companies actually work</h2>
-      <div class="tblwrap">
-        <table>
-          <thead><tr><th scope="col"><span class="vh">Feature</span></th><th scope="col">Excel, paper &amp; WhatsApp</th><th scope="col">Big international apps</th><th scope="col" class="us">SiteToFit</th></tr></thead>
-          <tbody>
-            <tr><td>Visit → job → installed in one flow</td><td>Spread over many places</td><td>Yes, often built for other trades</td><td class="us">Yes, made for sell-measure-install</td></tr>
-            <tr><td>App for installer teams with photo boxes</td><td>Photos lost in chats</td><td>Depends on the plan</td><td class="us">Included, no photo limit</td></tr>
-            <tr><td>Payment and invoice on the day</td><td>Paper receipts</td><td>Depends on the plan</td><td class="us">Included, from the installer’s phone</td></tr>
-            <tr><td>Store, stock &amp; what to order</td><td>Counted by hand</td><td>Depends on the plan</td><td class="us">Included, linked to every job</td></tr>
-            <tr><td>Maltese numbers &amp; WhatsApp reminders</td><td>By hand</td><td>Not made for Malta</td><td class="us">Built in</td></tr>
-            <tr><td>Your logo and colours</td><td>–</td><td>Depends on the plan</td><td class="us">Included</td></tr>
-            <tr><td>Malta grant paperwork (Solar pack)</td><td>By hand</td><td>No</td><td class="us">Yes</td></tr>
-            <tr><td>Support</td><td>–</td><td>Overseas, by ticket</td><td class="us">Local, in Malta</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <section class="band" id="microinvest" aria-labelledby="mi-h">
-    <div class="wrap">
-      <div class="eyebrow">Malta Enterprise · Micro Invest 2026–2030</div>
-      <h2 class="h2" id="mi-h">Get up to 65% of your first year back as a tax credit</h2>
-      <p class="lead">Under Malta Enterprise’s Micro Invest scheme, software you subscribe to online (SaaS), like SiteToFit, counts as a digital investment. If your company qualifies, the setup and your first 12 months can earn a tax credit of 65%, or 85% if you operate from Gozo.</p>
-      <div class="mi">
-        <div class="mi-hero">
-          <div class="big">65%<small>back as a tax credit</small></div>
-          <p>An example of how it adds up for every €1,000 you invest in setup and your first year (excluding VAT):</p>
-          <div class="mi-ex"><span>Setup and first 12 months</span><b>€1,000</b><span>Tax credit at 65%</span><b>− €650</b><span class="tot">What it really costs you</span><b>€350</b></div>
-          <p>In Gozo the credit is 85%, so the same €1,000 costs you €150.</p>
-          <div class="row-btns"><a class="btn pri" href="#quote" data-quote data-topic="microinvest">Request a call back and a quote</a></div>
-        </div>
-        <div class="card">
-          <h3>How it works</h3>
-          <ol class="mi-steps">
-            <li><div><b>Ask us to call you back</b><span>Tell us about your company and we’ll prepare a quote that fits your team.</span></div></li>
-            <li><div><b>Try it free for a month</b><span>Your own page with your logo, and your job types and photo boxes set up for you.</span></div></li>
-            <li><div><b>Keep going with one invoice</b><span>Setup and your first 12 months on one invoice, so it meets the scheme’s €500 minimum per invoice.</span></div></li>
-            <li><div><b>Your accountant claims the credit</b><span>They apply to Malta Enterprise for you. Claims for 2026 costs open on 1 January 2027, and the credit comes off the tax on your profits.</span></div></li>
-          </ol>
-          <h3 style="font-size:18px;margin-top:6px">Who can claim</h3>
-          <ul class="list"><li>Companies, partnerships and self-employed people in Malta and Gozo</li><li>With at least 1 and up to 50 full-time employees</li><li>Registered for VAT</li></ul>
-        </div>
-      </div>
-      <p class="mi-small">Micro Invest is run by Malta Enterprise, and every claim is subject to their approval and the scheme’s rules. Renewals after the first year don’t qualify. Each company can claim up to €65,000 over three years (€85,000 for Gozo, family and female-owned businesses). We’re not tax advisers, so please check with your accountant how it applies to you. Details on <a href="https://maltaenterprise.com" target="_blank" rel="noopener">maltaenterprise.com</a>.</p>
-    </div>
-  </section>
-
-  <section class="band soft" id="try" aria-labelledby="try-h">
-    <div class="wrap">
-      <div class="eyebrow">Try it</div>
-      <h2 class="h2" id="try-h">See it for yourself, then tell us what you think</h2>
-      <p class="lead">We're looking for a few local companies to try it and help shape it. Open the demo, follow the steps, and answer three quick questions at the end.</p>
-      <div class="try">
-        <div class="card">
-          <h3>Open the demo</h3>
-          <p style="color:var(--muted)">A sample kitchen company with made-up clients. Switch between the office and the installer's phone, and follow a job from first visit to installed.</p>
-          <div class="demo-img"><img src="img/dashboard.webp" alt="The demo's office dashboard with an alert for a finished job" width="1400" height="836"></div>
-          <div><a class="btn pri" href="demo/">Open the live demo</a></div>
-        </div>
-        <div class="side">
-          <div class="card">
-            <h3>What you get as an early company</h3>
-            <ul class="list"><li>A free one-month trial on your own page, with your logo</li><li>Up to 65% of your first year back through Micro Invest, if your company qualifies</li><li>Your job types and photo boxes set up for you</li><li>A say in what we build next</li></ul>
-          </div>
-          <div class="card" id="contact">
-            <h3>Talk to us</h3>
-            <p style="color:var(--muted)">Ask for a demo at your office or send your feedback, and one of our salespeople will get in touch.</p>
-            <div class="line-item"><strong id="c-phone">7932 3756</strong><small>phone &amp; WhatsApp</small></div>
-            <div class="line-item"><strong id="c-email" style="font-size:17px">sitetofit@gmail.com</strong><button class="copy" id="copy-email" type="button">Copy</button></div>
-            <div class="row-btns"><a class="btn pri" href="#quote" data-quote>Ask for a quote</a><a class="btn outline" href="https://wa.me/35679323756" target="_blank" rel="noopener">Message on WhatsApp</a></div>
-            <p class="status" id="copy-status" role="status"></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+</section>
 </main>
 
 <footer>
   <div class="wrap">
-    <span><b>SiteToFit</b> · Made in Malta · © 2026</span>
-    <span>Screens show a sample company with made-up data · <a href="privacy/" style="color:#fff">Privacy policy</a> · <a href="terms/" style="color:#fff">Terms of use</a></span>
+    <span><b style="color:var(--txt)">SiteToFit</b> · Made in Malta · © 2026</span>
+    <span>Screens show a sample company with made-up data · <a href="privacy/">Privacy policy</a> · <a href="terms/">Terms of use</a></span>
   </div>
 </footer>
 
 <script>
-document.getElementById('copy-email').addEventListener('click', function () {
-  var el = document.getElementById('c-email');
-  var status = document.getElementById('copy-status');
-  function selectIt() {
-    var r = document.createRange(); r.selectNodeContents(el);
-    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-    status.textContent = 'Email selected. Press Ctrl+C to copy it.';
-  }
-  try {
-    navigator.clipboard.writeText(el.textContent).then(function () { status.textContent = 'Email copied.'; }, selectIt);
-  } catch (e) { selectIt(); }
-});
+document.documentElement.classList.add('js');
+(function(){var n=document.getElementById('nav');function f(){n.classList.toggle('solid',scrollY>20)}addEventListener('scroll',f,{passive:true});f();})();
+(function(){var els=document.querySelectorAll('.rv');if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+ els.forEach(function(e){if(e.getBoundingClientRect().top<innerHeight)e.classList.add('in');else io.observe(e)});})();
+(function(){var w=document.querySelector('#watch .vid'),v=w.querySelector('video'),b=w.querySelector('.vplay');b.addEventListener('click',function(){v.play()});v.addEventListener('play',function(){w.classList.add('playing')});v.addEventListener('ended',function(){w.classList.remove('playing')});})();
+(function(){var amt=document.getElementById('mi-amt'),mt=document.getElementById('mi-mt'),gz=document.getElementById('mi-gz'),rate=.65;
+ function eur(n){return '€'+Math.round(n).toLocaleString('en-GB')}
+ function upd(){var a=Math.max(0,Number(amt.value)||0);document.getElementById('mi-a').textContent=eur(a);document.getElementById('mi-rl').textContent='Tax credit at '+Math.round(rate*100)+'%';document.getElementById('mi-c').textContent='− '+eur(a*rate);document.getElementById('mi-r').textContent=eur(a*(1-rate))}
+ mt.addEventListener('click',function(){rate=.65;mt.setAttribute('aria-pressed','true');gz.setAttribute('aria-pressed','false');upd()});
+ gz.addEventListener('click',function(){rate=.85;gz.setAttribute('aria-pressed','true');mt.setAttribute('aria-pressed','false');upd()});
+ amt.addEventListener('input',upd);upd();})();
+document.getElementById('copy-email').addEventListener('click',function(){var el=document.getElementById('c-email'),st=document.getElementById('copy-status');
+ function sel(){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);st.textContent='Email selected. Press Ctrl+C to copy it.'}
+ try{navigator.clipboard.writeText(el.textContent).then(function(){st.textContent='Email copied.'},sel)}catch(e){sel()}});
+(function(){var c=document.getElementById('globe');if(!c||!c.getContext)return;var x=c.getContext('2d'),dpr=Math.min(2,devicePixelRatio||1),W,H,R;
+ function size(){var r=c.getBoundingClientRect();W=r.width;H=r.height;c.width=W*dpr;c.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);R=Math.min(W,H)*0.36}
+ size();addEventListener('resize',size);
+ var seed=11;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+ var COL=['#7c5cff','#9b85ff','#c5f135','#d9d2ff','#7c5cff','#5b2ee6'],N=innerWidth<700?1800:3600,P=[];
+ for(var i=0;i<N;i++){var y=1-2*(i+.5)/N,rr=Math.sqrt(1-y*y),th=i*2.399963+rnd()*.08,j=1+(rnd()-.5)*.07;P.push([Math.cos(th)*rr*j,y*j,Math.sin(th)*rr*j,COL[Math.floor(rnd()*COL.length)],.6+rnd()*1.3])}
+ var D=[];for(i=0;i<500;i++)D.push([rnd()*6.283,1.15+rnd()*.8,(rnd()-.5)*1.3,COL[Math.floor(rnd()*4)],.5+rnd(),.02+rnd()*.05]);
+ var still=matchMedia('(prefers-reduced-motion:reduce)').matches,vis=true,t0=performance.now();
+ if('IntersectionObserver' in window)new IntersectionObserver(function(e){var was=vis;vis=e[0].isIntersecting;if(vis&&!was&&!still)requestAnimationFrame(draw)}).observe(c);
+ function draw(now){var t=still?4:((now||performance.now())-t0)/1000;x.clearRect(0,0,W,H);var cx=W/2,cy=H/2,ry=t*.12,rx=.38,cr=Math.cos(ry),sr=Math.sin(ry),cxr=Math.cos(rx),sxr=Math.sin(rx);
+  for(var k=0;k<P.length;k++){var p=P[k],X=p[0]*cr+p[2]*sr,Z=-p[0]*sr+p[2]*cr,Y=p[1]*cxr-Z*sxr;Z=p[1]*sxr+Z*cxr;var s=1/(1.9-Z*.55);x.globalAlpha=.25+.7*((Z+1)/2);x.fillStyle=p[3];x.fillRect(cx+X*R*s*1.25,cy+Y*R*s*1.25,p[4]*s*1.8,p[4]*s*1.8)}
+  for(k=0;k<D.length;k++){var q=D[k],a=q[0]+t*q[5];x.globalAlpha=.45;x.fillStyle=q[3];x.fillRect(cx+Math.cos(a)*q[1]*R,cy+q[2]*R+Math.sin(a)*q[1]*R*.25,q[4]*1.5,q[4]*1.5)}
+  x.globalAlpha=1;if(!still&&vis)requestAnimationFrame(draw)}
+ draw();})();
 </script>
 <script type="module" src="/assets/widget.js?v=1793189593"></script>
-
 </body>
 </html>
