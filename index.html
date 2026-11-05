@@ -188,6 +188,15 @@ footer b{color:var(--on-navy);font-family:var(--display)}
   .stage .phone img{border-radius:15px}
   .panel{padding:22px 16px 0;max-height:440px}
 }
+/* product video */
+.vid{position:relative;max-width:1080px;margin:28px auto 0;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px rgba(20,16,48,.25);background:#22107f;aspect-ratio:16/9}
+.vid video{display:block;width:100%;height:100%}
+.vid-note{text-align:center;margin-top:14px;color:var(--muted,#5b6672);font-size:15px}
+#watch .wrap{text-align:center}#watch .h2,#watch .lead{margin-left:auto;margin-right:auto}
+.vplay{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;border:0;border-radius:50%;background:#c5f135;color:#1a1240;display:grid;place-items:center;cursor:pointer;box-shadow:0 14px 40px rgba(8,4,40,.45);transition:transform .2s}
+.vplay:hover,.vplay:focus-visible{transform:scale(1.08)}.vplay:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.vid.playing .vplay{display:none}
+@media (max-width:600px){.vplay{width:76px;height:76px;margin:-38px 0 0 -38px}.vplay svg{width:28px;height:28px}}
 </style>
 
 </head>
@@ -225,6 +234,16 @@ footer b{color:var(--on-navy);font-family:var(--display)}
 </header>
 
 <main>
+  <section class="band" id="watch" aria-labelledby="watch-h">
+    <div class="wrap">
+      <div class="eyebrow">Watch it in a minute</div>
+      <h2 class="h2" id="watch-h">See how SiteToFit runs a job, from first enquiry to paid</h2>
+      <div class="vid"><video controls playsinline preload="none" poster="video/poster.webp" aria-label="SiteToFit product video, about one minute, no sound"><source src="video/sitetofit-product-video.mp4" type="video/mp4"></video><button class="vplay" type="button" aria-label="Play the video"><svg width="38" height="38" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button></div>
+      <p class="vid-note">1 minute 11 seconds · no sound</p>
+      <script>(function(){var w=document.querySelector('#watch .vid'),v=w.querySelector('video'),b=w.querySelector('.vplay');b.addEventListener('click',function(){v.play();});v.addEventListener('play',function(){w.classList.add('playing');});v.addEventListener('ended',function(){w.classList.remove('playing');});})();</script>
+    </div>
+  </section>
+
   <section class="band" id="how" aria-labelledby="how-h">
     <div class="wrap">
       <div class="eyebrow">What you get, step by step</div>
