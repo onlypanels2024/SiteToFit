@@ -56,7 +56,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 /* hero */
 .hero{position:relative;padding:70px 0 40px;overflow:hidden}
-#routes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,.25) 0,rgba(0,0,0,.45) 35%,#000 60%);mask-image:linear-gradient(90deg,rgba(0,0,0,.25) 0,rgba(0,0,0,.45) 35%,#000 60%)}
+#routes{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.6}
+main,footer{position:relative;z-index:1}
+.lead,.sub,h1,h2,.eyebrow,.status,.note,.small,footer{text-shadow:0 0 6px var(--bg),0 0 14px var(--bg),0 0 24px var(--bg)}
 .hero .wrap{position:relative}
 .hero h1{font-size:clamp(46px,7.4vw,100px);line-height:.98;max-width:13ch;margin-top:8px}
 .hero .sub{color:var(--muted);font-size:clamp(18px,1.6vw,21px);max-width:54ch;margin:26px 0 0}
@@ -76,7 +78,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .float b{display:block;font-size:15px}.float small{color:var(--muted)}
 .float .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-weight:800;background:var(--lime);color:var(--on-lime);flex:none}
 .stage .f1{left:-10px;top:-30px}.stage .f2{right:clamp(160px,24vw,300px);bottom:20px}
-@media (max-width:700px){.stage .float{display:none}.stage{margin-top:56px}#routes{opacity:.3}}
+@media (max-width:700px){.stage .float{display:none}.stage{margin-top:56px}#routes{opacity:.32}}
 
 /* businesses marquee */
 .marquee{border-block:1px solid var(--line);padding:18px 0;overflow:hidden;white-space:nowrap;margin-top:90px;position:relative}
@@ -196,6 +198,7 @@ footer a{color:var(--muted)}
 </style>
 </head>
 <body>
+<canvas id="routes" aria-hidden="true"></canvas>
 <header class="nav" id="nav">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="SiteToFit, back to top"><svg width="30" height="30" viewBox="0 0 200 200" fill="none" aria-hidden="true"><path d="M138 52 C 70 40, 42 78, 82 98 C 124 118, 150 140, 104 160 C 92 165, 80 166, 66 165" stroke="#c5f135" stroke-width="15" stroke-linecap="round" stroke-dasharray="1 26"/><path d="M138 8 C 120 8 108 21 108 37 C 108 58 138 82 138 82 C 138 82 168 58 168 37 C 168 21 156 8 138 8 Z" fill="#c5f135"/><circle cx="138" cy="37" r="10.5" fill="#0d0a1f"/><circle cx="52" cy="165" r="31" fill="#c5f135"/><path d="M38 165 L48 175 L67 155" stroke="#0d0a1f" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg><span>SiteTo<b>Fit</b></span></a>
@@ -212,7 +215,6 @@ footer a{color:var(--muted)}
 
 <main id="top">
 <section class="hero" aria-labelledby="hero-h">
-  <canvas id="routes" aria-hidden="true"></canvas>
   <div class="wrap">
     <div class="eyebrow">All-in-one CRM · Made in Malta</div>
     <h1 id="hero-h">From first visit to finished job. <em>One app.</em></h1>
@@ -428,7 +430,7 @@ document.getElementById('copy-email').addEventListener('click',function(){var el
  size();addEventListener('resize',size);
  var LIME='#c5f135',VIO='#7c5cff',still=matchMedia('(prefers-reduced-motion:reduce)').matches,vis=true,R=[],last=0;
  function rnd(a,b){return a+Math.random()*(b-a)}
- function make(t){var narrow=W<700,x0=narrow?W*.5:W*.58,x1=W*.97,y0=H*.06,y1=H*.92;
+ function make(t){var narrow=W<700,top=scrollY<H*.6,x0=top?(narrow?W*.5:W*.58):W*.03,x1=W*.97,y0=H*.08,y1=H*.92;
   var a={x:rnd(x0,x1),y:rnd(y0,y1)},b,tries=0;do{b={x:rnd(x0,x1),y:rnd(y0,y1)};tries++}while(Math.hypot(b.x-a.x,b.y-a.y)<Math.min(W,H)*.35&&tries<20);
   var mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y,bend=rnd(-.45,.45);
   var c1={x:a.x+dx*.25-dy*bend,y:a.y+dy*.25+dx*bend},c2={x:a.x+dx*.75+dy*bend,y:a.y+dy*.75-dx*bend};
@@ -439,7 +441,7 @@ document.getElementById('copy-email').addEventListener('click',function(){var el
  function tick(px,py,al,sc){x.globalAlpha=al;x.fillStyle=LIME;x.beginPath();x.arc(px,py,11*sc,0,7);x.fill();x.strokeStyle='#14102b';x.lineWidth=2.6;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(px-5*sc,py);x.lineTo(px-1.5*sc,py+3.6*sc);x.lineTo(px+5*sc,py-3.6*sc);x.stroke()}
  function grid(){x.globalAlpha=.07;x.strokeStyle='#ffffff';x.lineWidth=1;var g=56;x.beginPath();for(var gx=W%g/2;gx<W;gx+=g){x.moveTo(gx,0);x.lineTo(gx,H)}for(var gy=0;gy<H;gy+=g){x.moveTo(0,gy);x.lineTo(W,gy)}x.stroke()}
  function frame(now){var t=still?100:now/1000;x.clearRect(0,0,W,H);grid();
-  var want=W<700?2:6;while(R.length<want)R.push(make(t-(still?rnd(3,6):rnd(0,.4))));
+  var want=W<700?2:7;while(R.length<want)R.push(make(t-(still?rnd(3,6):rnd(0,.4))));
   for(var k=R.length-1;k>=0;k--){var r=R[k],e=t-r.t0,p=Math.min(1,e/r.dur),fade=still?1:Math.max(0,Math.min(1,1-(e-r.dur-r.hold)/0.8));
    if(fade<=0){R.splice(k,1);continue}
    var ease=1-Math.pow(1-p,3),d=r.len*ease;
