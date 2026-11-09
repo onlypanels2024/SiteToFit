@@ -214,3 +214,62 @@ exports.helpAlert = onDocumentWritten({ document: 'support/{id}', region: 'europ
     body: JSON.stringify({ topic: NTFY_TOPIC, title: isNew ? 'New SiteToFit help request' : 'New reply on a SiteToFit help request', message: 'A customer needs help in the app. Tap to open Help requests on your control dashboard.', tags: ['sos'], priority: isNew ? 4 : 3, click: SITE + '/app/#/admin/help/' + ev.params.id }),
   }).catch((e) => console.error('ntfy', e));
 });
+
+// ---------------------------------------------------------------------------------------------------------------
+// Quotes pack: emailing a quote to its client, and telling the company when the client accepts or declines online.
+// As with contracts, the app only says which quote; this checks it and writes the email itself.
+const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const euro2 = (n) => '€' + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dayText = (iso) => (iso ? new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Malta' }) : '');
+const companyInbox = (c) => clean((c.invoice && c.invoice.email) || (c.contact && c.contact.email), 120);
+
+exports.sendQuoteMail = onDocumentCreated({ document: 'companies/{cid}/mail/{id}', region: 'europe-west1', secrets: [RESEND_KEY], retry: false }, async (ev) => {
+  const ref = ev.data.ref; const m = ev.data.data(); const { cid } = ev.params;
+  if (!m || m.status !== 'queued' || m.kind !== 'quote-link' || !m.quoteId) return;
+  const fail = (msg) => ref.update({ status: 'error', error: String(msg).slice(0, 300), doneAt: Date.now() });
+  try {
+    const db = admin.firestore();
+    const [co, qd] = await Promise.all([db.doc(`companies/${cid}`).get(), db.doc(`companies/${cid}/quotes/${m.quoteId}`).get()]);
+    if (!co.exists || !qd.exists) return fail('Quote not found.');
+    const q = qd.data(); const comp = co.data(); const name = clean((comp.invoice && comp.invoice.legalName) || comp.name);
+    if (!q.clientEmail || q.clientEmail.toLowerCase() !== String(m.to).toLowerCase()) return fail('The email address doesn’t match the quote.');
+    if (q.status !== 'sent' || !q.token || q.token !== m.token) return fail('This quote isn’t waiting to be sent.');
+    const ln = await db.doc(`quoteLinks/${q.token}`).get();
+    if (!ln.exists || ln.data().cid !== cid || ln.data().quoteId !== m.quoteId) return fail('The quote link is missing.');
+    if (!q.pdf || !q.pdf.path || !q.pdf.path.startsWith(`companies/${cid}/quotes/${m.quoteId}/`)) return fail('The quote PDF isn’t ready.');
+    const [buf] = await admin.storage().bucket().file(q.pdf.path).download();
+    const reply = companyInbox(comp);
+    const first = clean(q.clientName).split(' ')[0];
+    const link = `${SITE}/quote/?t=${q.token}`;
+    const id = await resend({ from: `${clean(comp.name)} <quotes@siteto.fit>`, to: [q.clientEmail], ...(reply ? { reply_to: reply } : {}),
+      subject: `Quote ${clean(q.no, 30)} from ${name}`,
+      text: `Hi ${first},\n\nThank you for your interest. Your quote ${clean(q.no, 30)}${q.subject ? ` (${clean(q.subject, 120)})` : ''} for ${euro2(q.total)} is attached as a PDF.\n\nYou can also view it online and accept or decline it here:\n\n${link}\n\n${q.validUntil ? `This quote is valid until ${dayText(q.validUntil)}.\n\n` : ''}If you have any questions, reply to this email.\n\n${name}\n\nSent with SiteToFit`,
+      attachments: [{ filename: `Quote ${clean(q.no, 30)}.pdf`, content: buf.toString('base64') }] });
+    return ref.update({ status: 'sent', sentAt: Date.now(), providerId: id });
+  } catch (e) { await fail(e.message || e); }
+});
+
+// The client accepted or declined on the link: record it on the quote (even if nobody has the app open) and email the company.
+exports.quoteAnswered = onDocumentUpdated({ document: 'quoteLinks/{token}', region: 'europe-west1', secrets: [RESEND_KEY], retry: false }, async (ev) => {
+  const before = ev.data.before.data(); const after = ev.data.after.data(); const { token } = ev.params;
+  if (!before || !after || before.status !== 'sent' || !['accepted', 'declined'].includes(after.status) || !after.cid || !after.quoteId) return;
+  const db = admin.firestore();
+  const qref = db.doc(`companies/${after.cid}/quotes/${after.quoteId}`);
+  const qd = await qref.get();
+  if (!qd.exists || qd.data().token !== token || qd.data().status !== 'sent') return; // the office changed it, or it was answered already
+  const acc = after.status === 'accepted';
+  await qref.update(acc
+    ? { status: 'accepted', acceptedAt: after.acceptedAt || Date.now(), acceptName: clean(after.acceptName), answeredOnline: true }
+    : { status: 'declined', declinedAt: after.declinedAt || Date.now(), declineReason: String(after.declineReason || '').slice(0, 600), answeredOnline: true });
+  const co = await db.doc(`companies/${after.cid}`).get();
+  const to = co.exists ? companyInbox(co.data()) : '';
+  if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
+  const q = qd.data();
+  try {
+    await resend({ from: 'SiteToFit <quotes@siteto.fit>', to: [to],
+      subject: acc ? `Quote ${clean(q.no, 30)} accepted by ${clean(q.clientName)}` : `Quote ${clean(q.no, 30)} declined by ${clean(q.clientName)}`,
+      text: acc
+        ? `Good news: ${clean(after.acceptName) || clean(q.clientName)} accepted quote ${clean(q.no, 30)} (${euro2(q.total)}) online on ${fmtWhen(after.acceptedAt || Date.now())}.\n\nOpen Quotes in SiteToFit to turn it into a sale, an invoice or both.`
+        : `${clean(q.clientName)} declined quote ${clean(q.no, 30)} (${euro2(q.total)}) online on ${fmtWhen(after.declinedAt || Date.now())}.${after.declineReason ? `\n\nReason given: ${clean(after.declineReason, 600)}` : ''}\n\nYou can edit the quote in SiteToFit and send a new version.` });
+  } catch (e) { console.warn('quote alert email', e.message || e); }
+});

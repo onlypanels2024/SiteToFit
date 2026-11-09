@@ -1,0 +1,260 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid)); }
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function hasProfile() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function company(cid) { return get(/databases/$(database)/documents/companies/$(cid)).data; }
+    function inCompany(cid) {
+      return hasProfile() && me().companyId == cid && me().get('active', true) != false
+        && company(cid).get('status', 'trial') != 'paused';
+    }
+    function role() { return me().role; }
+    function manager(cid) { return inCompany(cid) && role() in ['owner', 'office']; }
+    function onlyChanging(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+
+    // SiteToFit admins (Gary). Created by hand in the console only.
+    match /superadmins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Public branding for each company's sign-in page (name, logo, colour only).
+    match /slugs/{slug} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // People with a login. Only the admin creates or changes them.
+    match /users/{uid} {
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid == uid)
+        || (hasProfile() && resource.data.companyId == me().companyId && role() in ['owner', 'office', 'sales']);
+      allow write: if isAdmin();
+    }
+
+    // Help requests from people using the app to SiteToFit (Gary). Each person sees only their own; Gary sees all.
+    match /support/{id} {
+      function own() { return signedIn() && resource.data.uid == request.auth.uid; }
+      allow read: if isAdmin() || own();
+      allow create: if signedIn() && inCompany(request.resource.data.cid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'cid', 'companyName', 'name', 'email', 'role', 'roleName', 'page', 'subject', 'status', 'lastFrom', 'userUnread', 'messages', 'createdAt', 'updatedAt'])
+        && request.resource.data.status == 'open' && request.resource.data.lastFrom == 'user' && request.resource.data.userUnread == false
+        && request.resource.data.messages is list && request.resource.data.messages.size() <= 60;
+      // The person can add their own messages, mark it solved or reopen it, and mark replies as read. Only Gary writes as SiteToFit.
+      allow update: if isAdmin() || (own()
+        && onlyChanging(['messages', 'lastFrom', 'status', 'updatedAt', 'userUnread'])
+        && request.resource.data.lastFrom in ['user', resource.data.lastFrom]
+        && request.resource.data.status in ['open', 'solved', resource.data.status]
+        && request.resource.data.userUnread in [false, resource.data.userUnread]
+        && request.resource.data.messages is list
+        && (request.resource.data.messages == resource.data.messages
+          || (request.resource.data.messages.size() == resource.data.messages.size() + 1
+            && request.resource.data.messages[0:resource.data.messages.size()] == resource.data.messages
+            && request.resource.data.messages[resource.data.messages.size()].from == 'user'
+            && request.resource.data.lastFrom == 'user')));
+      allow delete: if isAdmin();
+    }
+
+    // "Ask for a quote" requests from the website. Anyone may send one, only to Gary, plain text only.
+    // The Trigger Email extension reads this collection and emails Gary.
+    match /quotes/{id} {
+      function str(v, max) { return v is string && v.size() <= max; }
+      allow create: if request.resource.data.keys().hasOnly(['to', 'replyTo', 'message', 'name', 'company', 'trade', 'phone', 'email', 'size', 'text', 'status', 'page', 'createdAt'])
+        && request.resource.data.to == 'gary.falzon2104@gmail.com'
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.message.keys().hasOnly(['subject', 'text'])
+        && str(request.resource.data.message.subject, 200) && str(request.resource.data.message.text, 3000)
+        && str(request.resource.data.name, 80) && request.resource.data.name.size() > 0
+        && str(request.resource.data.company, 100) && str(request.resource.data.trade, 60)
+        && str(request.resource.data.phone, 30) && str(request.resource.data.size, 30) && str(request.resource.data.text, 1500)
+        && str(request.resource.data.email, 120) && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+        && request.resource.data.replyTo == request.resource.data.email;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Digital contracts pack: emailed signing links. Anyone holding the 48-character link code can open that one
+    // contract (never list them), record that it was opened, and sign it once before it expires. Nothing else.
+    match /signing/{token} {
+      function staffOf(cid) { return isAdmin() || (hasProfile() && me().companyId == cid && me().get('active', true) != false && me().role in ['owner', 'office', 'sales']); }
+      function salesOk(d) { return me().role != 'sales' || d.salesUid == request.auth.uid; }
+      allow get: if token.size() >= 32;
+      allow list: if signedIn() && staffOf(resource.data.cid) && salesOk(resource.data);
+      allow create: if signedIn() && staffOf(request.resource.data.cid) && salesOk(request.resource.data) && request.resource.data.status == 'sent';
+      allow delete: if signedIn() && staffOf(resource.data.cid) && salesOk(resource.data);
+      allow update: if
+        (signedIn() && staffOf(resource.data.cid) && salesOk(resource.data) && request.resource.data.cid == resource.data.cid)
+        || (resource.data.status == 'sent' && request.time.toMillis() < resource.data.expiresAt
+            && ((resource.data.openedAt == null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['openedAt']) && request.resource.data.openedAt is number)
+                || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'clientSig', 'clientSignedAt', 'agreeContract', 'agreePolicy', 'clientDevice'])
+                    && request.resource.data.status == 'client_signed' && request.resource.data.agreeContract == true && request.resource.data.agreePolicy == true
+                    && request.resource.data.clientSig is string && request.resource.data.clientSig.size() < 400000
+                    && request.resource.data.clientSig.matches('^data:image/png;base64,.*')
+                    && request.resource.data.clientSignedAt is number)));
+    }
+
+    // Quotes pack: the link a client opens to view a quote and accept or decline it. Anyone holding the 48-character
+    // code can open that one quote (never list them), record that it was opened, and answer once before it expires.
+    match /quoteLinks/{token} {
+      function qStaff(cid) { return isAdmin() || manager(cid); }
+      function client() { return request.resource.data; }
+      allow get: if token.size() >= 32;
+      allow list: if signedIn() && qStaff(resource.data.cid);
+      allow create: if signedIn() && qStaff(request.resource.data.cid) && request.resource.data.status == 'sent';
+      allow delete: if signedIn() && qStaff(resource.data.cid);
+      allow update: if
+        (signedIn() && qStaff(resource.data.cid) && request.resource.data.cid == resource.data.cid)
+        || (resource.data.status == 'sent' && request.time.toMillis() < resource.data.expiresAt
+            && ((resource.data.openedAt == null && onlyChanging(['openedAt']) && client().openedAt is number)
+                || (onlyChanging(['status', 'acceptName', 'acceptedAt', 'clientDevice']) && client().status == 'accepted'
+                    && client().acceptName is string && client().acceptName.size() >= 2 && client().acceptName.size() <= 80
+                    && client().acceptedAt is number && client().clientDevice is string && client().clientDevice.size() <= 200)
+                || (onlyChanging(['status', 'declineReason', 'declinedAt', 'clientDevice']) && client().status == 'declined'
+                    && client().declineReason is string && client().declineReason.size() <= 600
+                    && client().declinedAt is number && client().clientDevice is string && client().clientDevice.size() <= 200)));
+    }
+
+    match /companies/{cid} {
+      allow read: if isAdmin() || inCompany(cid) || (hasProfile() && me().companyId == cid);
+      allow create, delete: if isAdmin();
+      // Owners may change their own reminders, teams, job types and targets; everything else is admin-only.
+      allow update: if isAdmin() || (inCompany(cid) && role() == 'owner' && onlyChanging(['bank', 'teams', 'jobTypes', 'targets', 'invoice']))
+        // Rota & payroll pack: owner and office save the shift types (fix: this was missing, so shift types couldn't be saved)
+        || (manager(cid) && onlyChanging(['shiftTypes', 'jobHours', 'clockLocation']));
+
+      // Invoice numbers (and, in the Quotes pack, quote numbers in meta/quotes), counted up one at a time.
+      match /meta/{doc} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team']);
+        allow create: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team'] && request.resource.data.invoice == 1)
+          || (manager(cid) && doc == 'quotes' && request.resource.data.keys().hasOnly(['quote']) && request.resource.data.quote == 1);
+        allow update: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team'] && request.resource.data.invoice == resource.data.invoice + 1)
+          || (manager(cid) && doc == 'quotes' && onlyChanging(['quote']) && request.resource.data.quote == resource.data.quote + 1);
+      }
+      match /clients/{id} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+        allow write: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+      }
+      match /leads/{id} {
+        allow read, write: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+      }
+      match /visits/{id} {
+        allow read, write: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+      }
+      match /sales/{id} {
+        allow read: if isAdmin() || manager(cid) || (inCompany(cid) && role() == 'sales');
+        allow create: if isAdmin() || manager(cid) || (inCompany(cid) && role() == 'sales' && request.resource.data.salesUid == request.auth.uid);
+        allow update, delete: if isAdmin() || manager(cid);
+      }
+      match /items/{id} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'store']);
+        allow create, delete: if isAdmin() || manager(cid);
+        allow update: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'store']);
+      }
+      // ---- Rota & payroll pack ----
+      // People on the rota: everyone in the company can see names and shifts; only owner/office change them.
+      match /staff/{id} {
+        allow read: if isAdmin() || inCompany(cid);
+        allow write: if isAdmin() || manager(cid);
+      }
+      match /rota/{week} {
+        allow read: if isAdmin() || inCompany(cid);
+        allow write: if isAdmin() || manager(cid);
+      }
+      // Pay settings, pay runs, approved hours and the email queue: owner and office only.
+      match /pay/{id} { allow read, write: if isAdmin() || manager(cid); }
+      match /payruns/{id} {
+        allow read: if isAdmin() || manager(cid);
+        allow create: if isAdmin() || (manager(cid) && (request.resource.data.status != 'approved' || role() == 'owner'));
+        // owner and office prepare and finalise; only the owner approves (and only the owner changes an approved one)
+        allow update: if isAdmin() || (manager(cid) && ((request.resource.data.status != 'approved' && resource.data.status != 'approved') || role() == 'owner'));
+        allow delete: if isAdmin();
+      }
+      match /hours/{week} { allow read, write: if isAdmin() || manager(cid); }
+      match /mail/{id} {
+        allow read: if isAdmin() || manager(cid);
+        allow create: if (isAdmin() || manager(cid))
+          && get(/databases/$(database)/documents/companies/$(cid)/payruns/$(request.resource.data.ym)).data.status == 'approved'
+          && request.resource.data.status == 'queued' && request.resource.data.kind == 'payslip';
+        // Digital contracts pack: the signing link and the signed copy, for a contract the sender can see.
+        allow create: if (isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']))
+          && request.resource.data.status == 'queued' && request.resource.data.kind in ['contract-link', 'contract-signed']
+          && request.resource.data.by == request.auth.uid
+          && (role() != 'sales' || get(/databases/$(database)/documents/companies/$(cid)/contracts/$(request.resource.data.contractId)).data.salesUid == request.auth.uid);
+        // Quotes pack: emailing a quote to its client (owner and office).
+        allow create: if (isAdmin() || manager(cid))
+          && request.resource.data.status == 'queued' && request.resource.data.kind == 'quote-link'
+          && request.resource.data.by == request.auth.uid;
+        allow update, delete: if false; // only the email service changes these
+      }
+      // Each person's approved payslips: they see their own.
+      match /payslips/{id} {
+        allow read: if isAdmin() || manager(cid) || (inCompany(cid) && resource.data.uid == request.auth.uid);
+        allow write: if isAdmin() || (manager(cid) && role() == 'owner');
+      }
+      // Availability: each person sends their own; an installer team phone sends for its own team.
+      match /avail/{id} {
+        allow read: if isAdmin() || manager(cid)
+          || (inCompany(cid) && (resource.data.uid == request.auth.uid || (role() == 'team' && resource.data.team == me().team)));
+        allow create, update: if isAdmin() || manager(cid)
+          || (inCompany(cid) && request.resource.data.by == request.auth.uid
+              && (request.resource.data.uid == request.auth.uid || (role() == 'team' && request.resource.data.team == me().team && request.resource.data.uid == '')));
+        allow delete: if isAdmin() || manager(cid);
+      }
+      // Clock in/out: people clock themselves; the team phone clocks its own installers. Only owner/office edit times.
+      match /clock/{id} {
+        function mineOrTeam(d) { return d.uid == request.auth.uid || (role() == 'team' && d.team == me().team); }
+        allow read: if isAdmin() || manager(cid) || (inCompany(cid) && mineOrTeam(resource.data));
+        allow create: if isAdmin() || manager(cid)
+          || (inCompany(cid) && request.resource.data.by == request.auth.uid && mineOrTeam(request.resource.data)
+              && request.resource.data.out == '');
+        allow update: if isAdmin() || manager(cid)
+          || (inCompany(cid) && mineOrTeam(resource.data) && resource.data.out == '' && onlyChanging(['out', 'outLoc']));
+        allow delete: if isAdmin() || manager(cid);
+      }
+      // Leave: people ask for their own (the team phone for its installers); owner/office approve and change it.
+      match /leave/{id} {
+        function mineOrTeamL(d) { return d.uid == request.auth.uid || (role() == 'team' && d.team == me().team); }
+        allow read: if isAdmin() || manager(cid) || (inCompany(cid) && mineOrTeamL(resource.data));
+        allow create: if isAdmin() || manager(cid)
+          || (inCompany(cid) && request.resource.data.by == request.auth.uid && mineOrTeamL(request.resource.data)
+              && request.resource.data.status in ['requested', 'reported']);
+        allow update: if isAdmin() || manager(cid)
+          || (inCompany(cid) && mineOrTeamL(resource.data)
+              && ((resource.data.status == 'requested' && request.resource.data.status == 'cancelled' && onlyChanging(['status']))
+                  || onlyChanging(['cert'])));
+        allow delete: if isAdmin() || manager(cid);
+      }
+      // ---- Digital contracts pack ----
+      match /contractSettings/{doc} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+        allow write: if isAdmin() || manager(cid);
+      }
+      // Contracts are a legal record: never deleted from the app.
+      match /contracts/{id} {
+        allow read: if isAdmin() || manager(cid) || (inCompany(cid) && role() == 'sales' && resource.data.salesUid == request.auth.uid);
+        allow create: if isAdmin() || manager(cid) || (inCompany(cid) && role() == 'sales' && request.resource.data.salesUid == request.auth.uid);
+        allow update: if isAdmin() || manager(cid)
+          || (inCompany(cid) && role() == 'sales' && resource.data.salesUid == request.auth.uid && request.resource.data.salesUid == request.auth.uid
+              && resource.data.status != 'signed');
+        allow delete: if isAdmin();
+      }
+      // ---- Quotes pack (owner and office) ----
+      match /quoteSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
+      match /quotes/{id} { allow read, write: if isAdmin() || manager(cid); }
+      match /jobs/{id} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'store'])
+          || (inCompany(cid) && role() == 'team' && resource.data.team == me().team);
+        allow create, delete: if isAdmin() || manager(cid);
+        allow update: if isAdmin() || manager(cid)
+          || (inCompany(cid) && role() == 'store' && onlyChanging(['delivered']))
+          || (inCompany(cid) && role() == 'team' && resource.data.team == me().team
+              && onlyChanging(['photos', 'status', 'doneAt', 'pendingPayments', 'invoice'])
+              && request.resource.data.status in ['todo', 'done']);
+      }
+    }
+  }
+}
