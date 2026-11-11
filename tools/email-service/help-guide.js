@@ -40,6 +40,11 @@ OPTIONAL PARTS (only if the company has them switched on)
   - Sending: "Email it" (the client gets the PDF and a link), "Send by WhatsApp", or "Copy the link". On the link the client can download the PDF and "Accept" (types their name) or decline with a reason. The quote shows Sent, Viewed by client, Accepted, Declined or Expired, with a history on the right.
   - "Convert" (on an accepted quote, or under "More"): make a sale (Sales page and targets, quote PDF attached), an invoice (next invoice number, every line copied), or both. "More" also has Mark as accepted/declined, Duplicate and Delete.
   - "Quote settings": number prefix, how many days quotes are valid, the company's own fields (name and unit), default notes and terms. The red number on Quotes is accepted quotes not converted yet.
+- Client app pack (owner and office, menu "Client requests"; switched on per company):
+  - On a client's page, "Give <name> the app" makes their private app link; "Send the app link" sends it by WhatsApp or email. No password: the link opens the app. They can add it to their home screen. "Turn off" stops the link working.
+  - In the app the client sees their appointments (site visits and jobs) and can tap "Confirm" or "Ask for another day", report a fault (type, description, up to 4 photos), book a service from the company's extras list, send a message, and see their quotes, invoices, signed contracts and photos of the finished job.
+  - "Client requests" lists faults, bookings, date changes and messages (tabs New, In progress, Done, Confirmations). "Reply" sends an answer the client sees in their app; "In progress" and "Done" change the status; bookings can become a quote with "Make a quote". "Coming up" shows which clients confirmed.
+  - "Client app settings": welcome message, phone/WhatsApp the client sees, the extras they can book (name, from price, description) and the fault types. The client's app updates within seconds while the office app is open.
 
 PHONES
 - Installer team ("My jobs"): each team sees only its jobs: address with "Directions", work to do, materials, note from the office, photo boxes. Add at least one photo, then "Job done"; the office gets an alert. "Record a payment" for payment on the day (cash, cheque with a photo, bank transfer or Revolut, card) and send the client the invoice.

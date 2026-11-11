@@ -118,6 +118,37 @@ service cloud.firestore {
                     && client().declinedAt is number && client().clientDevice is string && client().clientDevice.size() <= 200)));
     }
 
+    // Client app pack: each client's private app. The 48-character code in the link is the key. The client can
+    // read their own app, record that they opened it, confirm appointments and keep a list of what they sent.
+    match /clientLinks/{token} {
+      function caStaff(cid) { return isAdmin() || manager(cid); }
+      allow get: if token.size() >= 32;
+      allow list: if signedIn() && caStaff(resource.data.cid);
+      allow create: if signedIn() && caStaff(request.resource.data.cid);
+      allow delete: if signedIn() && caStaff(resource.data.cid);
+      allow update: if
+        (signedIn() && caStaff(resource.data.cid) && request.resource.data.cid == resource.data.cid && request.resource.data.clientId == resource.data.clientId)
+        || (resource.data.active == true
+            && ((onlyChanging(['seenAt']) && request.resource.data.seenAt is number)
+                || (onlyChanging(['confirms']) && request.resource.data.confirms is map && request.resource.data.confirms.size() <= 100)
+                || (onlyChanging(['outbox']) && request.resource.data.outbox is list && request.resource.data.outbox.size() <= 50)));
+    }
+    // What clients send from their app: faults, bookings, changes of date, confirmations and messages. Clients can
+    // only add new ones through a link that is switched on; only the company's owner and office read them.
+    match /clientRequests/{id} {
+      function caLink() { return get(/databases/$(database)/documents/clientLinks/$(request.resource.data.token)).data; }
+      function r() { return request.resource.data; }
+      allow create: if r().token is string && r().token.size() >= 32
+        && exists(/databases/$(database)/documents/clientLinks/$(r().token))
+        && caLink().active == true && r().cid == caLink().cid && r().clientId == caLink().clientId
+        && r().keys().hasOnly(['token', 'cid', 'clientId', 'clientName', 'kind', 'title', 'text', 'preferred', 'photos', 'apptKey', 'extra', 'status', 'createdAt'])
+        && r().status == 'new' && r().kind in ['fault', 'extra', 'change', 'confirm', 'message']
+        && r().title is string && r().title.size() <= 120 && r().text is string && r().text.size() <= 2000
+        && r().preferred is string && r().preferred.size() <= 120 && r().clientName is string && r().clientName.size() <= 120
+        && r().photos is list && r().photos.size() <= 4 && r().createdAt is number;
+      allow read, update, delete: if signedIn() && (isAdmin() || manager(resource.data.cid));
+    }
+
     match /companies/{cid} {
       allow read: if isAdmin() || inCompany(cid) || (hasProfile() && me().companyId == cid);
       allow create, delete: if isAdmin();
@@ -245,6 +276,8 @@ service cloud.firestore {
       // ---- Quotes pack (owner and office) ----
       match /quoteSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       match /quotes/{id} { allow read, write: if isAdmin() || manager(cid); }
+      // ---- Client app pack ----
+      match /clientAppSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       match /jobs/{id} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'store'])
           || (inCompany(cid) && role() == 'team' && resource.data.team == me().team);

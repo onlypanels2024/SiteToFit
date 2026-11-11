@@ -1,0 +1,60 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && firestore.exists(/databases/(default)/documents/superadmins/$(request.auth.uid)); }
+    function me() { return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data; }
+    function inCompany(cid) {
+      return signedIn() && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && me().companyId == cid && me().get('active', true) != false;
+    }
+    function okFile() { return request.resource.size < 15 * 1024 * 1024; }
+
+    // Company logos: anyone can see them (they show on the sign-in page); only the admin uploads.
+    match /logos/{cid}/{file} {
+      allow read: if true;
+      allow write: if isAdmin() && okFile();
+    }
+
+    // Job photos, visit files and sale documents: only people from that company.
+    match /companies/{cid}/{folder}/{rest=**} {
+      allow read: if !(folder in ['payslips', 'medical', 'contracts', 'contract-uploads']) && (isAdmin() || inCompany(cid));
+      allow create, update: if !(folder in ['payslips', 'medical', 'contracts', 'contract-uploads']) && (isAdmin() || (inCompany(cid) && okFile()));
+      allow delete: if !(folder in ['payslips', 'medical', 'contracts', 'contract-uploads']) && (isAdmin() || inCompany(cid));
+    }
+
+    // Client app pack: photos a client adds to a fault report or message. Only through a link that is switched on,
+    // images only, up to 12 MB. The 48-character code in the path keeps them private.
+    match /clientUploads/{token}/{file} {
+      allow read: if token.size() >= 32;
+      allow create: if token.size() >= 32 && request.resource.size < 12 * 1024 * 1024 && request.resource.contentType.matches('image/.*')
+        && firestore.get(/databases/(default)/documents/clientLinks/$(token)).data.active == true;
+    }
+
+    // Payslip PDFs waiting to be emailed: only the owner and office.
+    match /companies/{cid}/payslips/{rest=**} {
+      allow read, delete: if isAdmin() || (inCompany(cid) && me().role in ['owner', 'office']);
+      allow create, update: if isAdmin() || (inCompany(cid) && me().role in ['owner', 'office'] && okFile());
+    }
+  
+
+    // Medical certificates: the person (or team phone) who added it, and the owner and office.
+    match /companies/{cid}/medical/{uid}/{file} {
+      allow read: if isAdmin() || (inCompany(cid) && (request.auth.uid == uid || me().role in ['owner', 'office']));
+      allow create, update: if isAdmin() || (inCompany(cid) && (request.auth.uid == uid || me().role in ['owner', 'office']) && okFile());
+      allow delete: if isAdmin() || (inCompany(cid) && (request.auth.uid == uid || me().role in ['owner', 'office']));
+    }
+  
+    // Digital contracts: signed PDFs (with client ID numbers) for owner, office and salespeople only.
+    match /companies/{cid}/contracts/{rest=**} {
+      allow read, delete: if isAdmin() || (inCompany(cid) && me().role in ['owner', 'office', 'sales']);
+      allow create, update: if isAdmin() || (inCompany(cid) && me().role in ['owner', 'office', 'sales'] && okFile());
+    }
+    // Contract PDFs uploaded for AI conversion: owner and office only.
+    match /companies/{cid}/contract-uploads/{rest=**} {
+      allow read, delete: if isAdmin() || (inCompany(cid) && me().role in ['owner', 'office']);
+      allow create, update: if isAdmin() || (inCompany(cid) && me().role in ['owner', 'office'] && okFile());
+    }
+  }
+}
