@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Payment received</title><meta name="robots" content="noindex">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#18212b;--muted:#5f6a76;--ok:#166534;--ok-soft:#e8f6ee;--bad:#9a3412;--bad-soft:#fff1e6}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
+main{background:var(--card);border-radius:20px;box-shadow:0 10px 40px rgba(16,24,40,.08);padding:36px 28px;max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.t{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:var(--ok-soft);color:var(--ok)}
+.cancel .t{background:var(--bad-soft);color:var(--bad)}
+h1{font-size:24px;margin:8px 0 0}p{margin:0;color:var(--muted)}
+small{margin-top:14px;color:var(--muted);font-size:12.5px}
+</style></head>
+<body><main id="m">
+<span class="t" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+<h1 id="h">Payment received</h1>
+<p id="p">Thank you. Your card payment went through and the company has been told. You can close this page.</p>
+<small>Secure card payment by Stripe · sent with SiteToFit</small>
+</main>
+<script>
+(function(){var q=new URLSearchParams(location.search),c=(q.get('c')||'').slice(0,80);
+if(q.get('cancel')){document.getElementById('m').className='cancel';document.title='Payment not completed';
+document.querySelector('.t').innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+document.getElementById('h').textContent='Payment not completed';document.getElementById('p').textContent='Nothing was taken from your card. To pay, open the link'+(c?' from '+c:'')+' again.';}
+else if(c){document.getElementById('p').textContent='Thank you. Your card payment to '+c+' went through and they have been told. You can close this page.';}})();
+</script></body></html>

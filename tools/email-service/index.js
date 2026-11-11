@@ -273,3 +273,117 @@ exports.quoteAnswered = onDocumentUpdated({ document: 'quoteLinks/{token}', regi
         : `${clean(q.clientName)} declined quote ${clean(q.no, 30)} (${euro2(q.total)}) online on ${fmtWhen(after.declinedAt || Date.now())}.${after.declineReason ? `\n\nReason given: ${clean(after.declineReason, 600)}` : ''}\n\nYou can edit the quote in SiteToFit and send a new version.` });
   } catch (e) { console.warn('quote alert email', e.message || e); }
 });
+
+// ---------------------------------------------------------------------------------------------------------------
+// POS pack: card payments through Stripe Connect. Each client company connects its own Stripe account (Stripe sets
+// its fees and pays it out); SiteToFit creates a payment page for each payment and Stripe tells us when it's paid.
+// Secrets (Gary sets them himself): STRIPE_SECRET (SiteToFit's platform secret key) and STRIPE_WEBHOOK_SECRET
+// (signing secret of the Connect webhook endpoint pointing at stripeWebhook).
+const { onRequest } = require('firebase-functions/v2/https');
+const STRIPE_SECRET = defineSecret('STRIPE_SECRET');
+const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
+const stripeClient = () => require('stripe')(STRIPE_SECRET.value());
+async function staffOf(req, cid, roles) {
+  const uid = req.auth && req.auth.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Please sign in.');
+  if (typeof cid !== 'string' || !cid) throw new HttpsError('invalid-argument', 'Company missing.');
+  const db = admin.firestore();
+  const [me, sa] = await Promise.all([db.doc(`users/${uid}`).get(), db.doc(`superadmins/${uid}`).get()]);
+  const ok = sa.exists || (me.exists && me.data().companyId === cid && roles.includes(me.data().role) && me.data().active !== false);
+  if (!ok) throw new HttpsError('permission-denied', 'You can’t do this for this company.');
+  return uid;
+}
+const stripeState = (a) => ({ accountId: a.id, chargesEnabled: !!a.charges_enabled, payoutsEnabled: !!a.payouts_enabled, detailsSubmitted: !!a.details_submitted, country: a.country || '', checkedAt: Date.now() });
+
+// The owner connects (or finishes connecting) the company's Stripe account. Returns Stripe's set-up page.
+exports.stripeConnect = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  const { cid, country } = req.data || {};
+  await staffOf(req, cid, ['owner']);
+  const stripe = stripeClient(); const db = admin.firestore();
+  const cref = db.doc(`companies/${cid}`); const co = (await cref.get()).data() || {};
+  let accountId = co.stripe && co.stripe.accountId;
+  if (!accountId) {
+    const acct = await stripe.accounts.create({
+      country: ['MT', 'IE', 'GB'].includes(country) ? country : 'MT',
+      email: clean((co.invoice && co.invoice.email) || (co.contact && co.contact.email), 120) || undefined,
+      business_profile: { name: clean(co.name, 100) || undefined },
+      controller: { fees: { payer: 'account' }, losses: { payments: 'stripe' }, stripe_dashboard: { type: 'full' } },
+      metadata: { cid },
+    });
+    accountId = acct.id;
+    await cref.update({ stripe: stripeState(acct) });
+  }
+  const link = await stripe.accountLinks.create({ account: accountId, type: 'account_onboarding', refresh_url: `${SITE}/app/#/pos`, return_url: `${SITE}/app/#/pos` });
+  return { url: link.url };
+});
+
+// Checks whether the company's Stripe account can take card payments yet.
+exports.stripeStatus = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  const { cid } = req.data || {};
+  await staffOf(req, cid, ['owner', 'office']);
+  const cref = admin.firestore().doc(`companies/${cid}`); const co = (await cref.get()).data() || {};
+  if (!co.stripe || !co.stripe.accountId) return { chargesEnabled: false };
+  const acct = await stripeClient().accounts.retrieve(co.stripe.accountId);
+  const s = stripeState(acct); await cref.update({ stripe: s });
+  return { chargesEnabled: s.chargesEnabled };
+});
+
+// Creates the Stripe payment page for one POS payment, on the company's own Stripe account.
+exports.posCheckout = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  const { cid, tillId } = req.data || {};
+  await staffOf(req, cid, ['owner', 'office']);
+  const db = admin.firestore();
+  const [co, td] = await Promise.all([db.doc(`companies/${cid}`).get(), db.doc(`companies/${cid}/tills/${tillId}`).get()]);
+  const acct = co.exists && co.data().stripe;
+  if (!acct || !acct.chargesEnabled) throw new HttpsError('failed-precondition', 'Card payments aren’t switched on yet. Connect Stripe in POS settings.');
+  if (!td.exists) throw new HttpsError('not-found', 'Payment not found.');
+  const t = td.data();
+  if (t.status !== 'pending' || t.method !== 'card') throw new HttpsError('failed-precondition', 'This payment isn’t waiting for a card payment.');
+  const cents = Math.round(Number(t.total) * 100);
+  if (!(cents >= 50)) throw new HttpsError('invalid-argument', 'Card payments must be at least €0.50.');
+  const name = clean(co.data().name, 80);
+  const session = await stripeClient().checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: cents, product_data: { name: `${name} · ${clean(t.no, 20)}`, description: clean((t.ref && t.ref.label) || 'Payment', 120) } } }],
+    customer_email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t.email || '') ? t.email : undefined,
+    payment_intent_data: { description: `${name} ${clean(t.no, 20)}`, metadata: { cid, tillId } },
+    metadata: { cid, tillId },
+    success_url: `${SITE}/paid/?c=${encodeURIComponent(name)}`,
+    cancel_url: `${SITE}/paid/?c=${encodeURIComponent(name)}&cancel=1`,
+  }, { stripeAccount: acct.accountId });
+  await td.ref.update({ stripe: { url: session.url, sessionId: session.id, accountId: acct.accountId } });
+  return { url: session.url, sessionId: session.id };
+});
+
+// Stripe calls this when a client has paid (Connect webhook: checkout.session.completed and account.updated).
+exports.stripeWebhook = onRequest({ region: 'europe-west1', secrets: [STRIPE_SECRET, STRIPE_WEBHOOK_SECRET] }, async (req, res) => {
+  let ev;
+  try { ev = stripeClient().webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET.value()); }
+  catch (e) { res.status(400).send('Bad signature'); return; }
+  const db = admin.firestore();
+  try {
+    if (ev.type === 'checkout.session.completed' && ev.data.object.payment_status === 'paid') {
+      const s = ev.data.object; const { cid, tillId } = s.metadata || {};
+      if (cid && tillId) {
+        const tref = db.doc(`companies/${cid}/tills/${tillId}`);
+        await db.runTransaction(async (tx) => {
+          const td = await tx.get(tref); if (!td.exists) return;
+          const t = td.data();
+          if (t.status === 'paid' || !t.stripe || t.stripe.sessionId !== s.id || ev.account !== t.stripe.accountId) return;
+          const amount = (s.amount_total || 0) / 100;
+          let jref = null; let j = null;
+          if (t.ref && t.ref.kind === 'job' && t.ref.id) { jref = db.doc(`companies/${cid}/jobs/${t.ref.id}`); const jd = await tx.get(jref); j = jd.exists ? jd.data() : null; }
+          tx.update(tref, { status: 'paid', paidAt: Date.now(), stripe: { ...t.stripe, paymentIntent: s.payment_intent || '', amountPaid: amount } });
+          if (j && !(j.payments || []).some((p) => p.tillId === tillId)) {
+            tx.update(jref, { paid: (Number(j.paid) || 0) + amount, payments: [...(j.payments || []), { amount, at: Date.now(), method: 'card', note: `Card · receipt ${t.no}`, tillId }] });
+          }
+        });
+      }
+    }
+    if (ev.type === 'account.updated') {
+      const a = ev.data.object; const cid = a.metadata && a.metadata.cid;
+      if (cid) { const cref = db.doc(`companies/${cid}`); const co = await cref.get(); if (co.exists && co.data().stripe && co.data().stripe.accountId === a.id) await cref.update({ stripe: stripeState(a) }); }
+    }
+    res.json({ received: true });
+  } catch (e) { console.error('stripeWebhook', e); res.status(500).send('Error'); }
+});

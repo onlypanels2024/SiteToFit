@@ -161,9 +161,11 @@ service cloud.firestore {
       match /meta/{doc} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team']);
         allow create: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team'] && request.resource.data.invoice == 1)
-          || (manager(cid) && doc == 'quotes' && request.resource.data.keys().hasOnly(['quote']) && request.resource.data.quote == 1);
+          || (manager(cid) && doc == 'quotes' && request.resource.data.keys().hasOnly(['quote']) && request.resource.data.quote == 1)
+          || (manager(cid) && doc == 'tills' && request.resource.data.keys().hasOnly(['receipt']) && request.resource.data.receipt == 1);
         allow update: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team'] && request.resource.data.invoice == resource.data.invoice + 1)
-          || (manager(cid) && doc == 'quotes' && onlyChanging(['quote']) && request.resource.data.quote == resource.data.quote + 1);
+          || (manager(cid) && doc == 'quotes' && onlyChanging(['quote']) && request.resource.data.quote == resource.data.quote + 1)
+          || (manager(cid) && doc == 'tills' && onlyChanging(['receipt']) && request.resource.data.receipt == resource.data.receipt + 1);
       }
       match /clients/{id} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
@@ -278,6 +280,9 @@ service cloud.firestore {
       match /quotes/{id} { allow read, write: if isAdmin() || manager(cid); }
       // ---- Client app pack ----
       match /clientAppSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
+      // ---- POS pack (owner and office). Card payments are marked paid by the payment service. ----
+      match /posSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
+      match /tills/{id} { allow read, create, update: if isAdmin() || manager(cid); allow delete: if isAdmin(); }
       match /jobs/{id} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'store'])
           || (inCompany(cid) && role() == 'team' && resource.data.team == me().team);
