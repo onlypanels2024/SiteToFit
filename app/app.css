@@ -705,3 +705,24 @@ body.pitch .topbar{top:64px}
 @media (max-width:1100px){.dcards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:860px){.dgrid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:420px){.dcard{padding:13px}.dcard b{font-size:24px}.dic{width:36px;height:36px}.dtoday .dk{width:70px}}
+
+/* ---- Search in the top bar ---- */
+.gsearch{position:relative;flex:1 1 auto;max-width:480px}
+.gs-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);display:grid;pointer-events:none}
+.gsearch input{width:100%;font:inherit;font-size:14.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:99px;min-height:40px;padding:8px 16px 8px 40px}
+.gsearch input:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+.gs-res{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(16,24,40,.16);padding:6px;display:flex;flex-direction:column;gap:2px;z-index:40;max-height:70vh;overflow-y:auto}
+.gs-res a{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;color:var(--ink);text-decoration:none}
+.gs-res a:hover,.gs-res a:focus-visible,.gs-res a.first{background:var(--brand-soft)}
+.gs-type{flex:none;width:74px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--brand)}
+.gs-t{display:flex;flex-direction:column;min-width:0}.gs-t b{font-size:14.5px}
+.gs-t small{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs-more{margin:4px 10px;color:var(--muted);font-size:13px}
+.gs-btn{display:none}
+@media (max-width:899px){
+  .topbar{flex-wrap:wrap}
+  .gsearch{display:none;order:5;flex:1 0 100%;max-width:none}
+  .gsearch.open{display:block}
+  .gsearch input{background:#fff;border-color:transparent}
+  .gs-btn{display:grid;place-items:center;width:42px;height:42px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:var(--side-ink);cursor:pointer}
+}
