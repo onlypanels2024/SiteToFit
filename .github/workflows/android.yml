@@ -5,7 +5,7 @@ name: Android app
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'review/**']
     paths: ['android/**', '.github/workflows/android.yml']
 
 jobs:
