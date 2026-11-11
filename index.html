@@ -115,6 +115,25 @@ main,footer{position:relative;z-index:1}
 .pic.tall .phone{width:250px}
 @media (max-width:860px){.step{grid-template-columns:minmax(0,1fr);padding:26px;gap:26px}.step:nth-child(even) .pic{order:0}}
 
+/* client app */
+.cap-new{display:inline-flex;align-items:center;gap:8px}
+.cap-new span{background:var(--lime);color:var(--on-lime);border-radius:99px;padding:3px 10px;letter-spacing:.1em}
+.cap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;align-items:center;margin-top:56px}
+.cap-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cap-list .card{padding:22px}
+.cap-list .ico{margin-bottom:14px}
+.cap-list h3{font-size:19px}
+.cap-phones{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:26px;min-height:560px}
+.cap-phones .phone{width:240px;flex:none;min-width:0}
+.cap-phones .phone img{aspect-ratio:600/1021}
+.cap-phones .phone:first-child{transform:rotate(-3deg);margin-top:44px}
+.cap-phones .phone:last-child{transform:rotate(3deg)}
+.cap-how{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.cap-how span{font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--txt);border:1px solid var(--line2);border-radius:99px;padding:7px 14px}
+.cap-office{margin-top:22px}
+@media (max-width:1000px){.cap{grid-template-columns:minmax(0,1fr)}.cap-phones{order:-1;min-height:0}}
+@media (max-width:620px){.cap-list{grid-template-columns:minmax(0,1fr)}.cap-phones{gap:14px}.cap-phones .phone{width:47%;border-width:7px;border-radius:28px}}
+
 /* grids and cards */
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:48px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:48px}
@@ -205,6 +224,7 @@ footer a{color:var(--muted)}
     <nav class="links" aria-label="Main">
       <a href="#how">How it works</a>
       <a href="#store">Store</a>
+      <a href="#client-app">Client app</a>
       <a href="#included">Features</a>
       <a href="#why">Why us</a>
       <a href="#microinvest">Micro Invest</a>
@@ -277,6 +297,30 @@ footer a{color:var(--muted)}
       <div class="card rv"><div class="k">Stock</div><h3 style="margin-top:8px">In store, kept for jobs, available</h3><p>For every product, at a glance. Type or scan a serial number to see where it went. Stock take included.</p><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="img/store-stock.webp" alt="Stock screen showing what's in the store, kept for jobs and available" loading="lazy"></div></div>
       <div class="card rv"><div class="k">To order</div><h3 style="margin-top:8px">What to buy before you run short</h3><p>What to order so every booked job is covered, and which job would be short without it. Items below your warning level are flagged.</p><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="img/store-order.webp" alt="To order screen listing what to order to cover every booked job" loading="lazy"></div></div>
     </div>
+  </div>
+</section>
+
+<section id="client-app" aria-labelledby="cap-h">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow cap-new"><span>New</span>Client app</div>
+      <h2 id="cap-h">Give every client <em>their own app.</em></h2>
+      <p class="lead">With your logo and your colours. Your clients confirm their appointments, report a fault with photos and book extra services, and you see it all in one list. Fewer phone calls for your office, and a company that looks as big as it works.</p>
+      <div class="cap-how"><span>No app store</span><span>No password</span><span>iPhone and Android</span><span>Optional pack</span></div>
+    </div>
+    <div class="cap">
+      <div class="cap-list">
+        <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></div><h3>Confirm appointments</h3><p>Clients see their next visit or job and tap Confirm, or ask for another day. No more wasted trips.</p></div>
+        <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.5"/></svg></div><h3>Report a fault</h3><p>They choose what's wrong, describe it and add photos. You know what to bring before you go.</p></div>
+        <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div><h3>Book extra services</h3><p>Your own list, like a yearly service or cleaning, with your prices. A booking can become a quote in one tap.</p></div>
+        <div class="card rv"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg></div><h3>Documents and replies</h3><p>Quotes, invoices, signed contracts and photos of the finished job, plus every reply from your office.</p></div>
+      </div>
+      <div class="cap-phones rv" aria-label="The client app on a phone">
+        <div class="phone"><img src="img/client-fault.webp" alt="Reporting a fault in the client app, with a photo of a leak under the sink" width="600" height="1021" loading="lazy"></div>
+        <div class="phone"><img src="img/client-home.webp" alt="The client app home screen with the next appointment and Confirm button" width="600" height="1021" loading="lazy"></div>
+      </div>
+    </div>
+    <article class="step cap-office rv"><div><div class="tag"><b>Office</b>Client requests</div><h3>Everything your clients send, in one list</h3><p>Faults, bookings, changes of date and messages arrive with the client's name, address and photos. Reply from the office and the client sees your answer in their app.</p><ul class="ticks"><li>A red number on the menu for anything new</li><li>See which clients confirmed their appointment</li><li>Give a client the app with one tap, by WhatsApp or email</li></ul></div><div class="pic"><div class="win"><div class="bar"><i></i><i></i><i></i><b>Client requests</b></div><img src="img/client-requests.webp" alt="Client requests screen with a fault report and photo, and which clients confirmed" width="1400" height="966" loading="lazy"></div></div></article>
   </div>
 </section>
 
