@@ -321,6 +321,19 @@ async function staffOf(req, cid, roles) {
 const stripeState = (a) => ({ accountId: a.id, chargesEnabled: !!a.charges_enabled, payoutsEnabled: !!a.payouts_enabled, detailsSubmitted: !!a.details_submitted, country: a.country || '', checkedAt: Date.now() });
 
 // The owner connects (or finishes connecting) the company's Stripe account. Returns Stripe's set-up page.
+// Turns a Stripe error into something the person reading the screen can act on.
+function stripeFail(e, what) {
+  const msg = (e && (e.raw && e.raw.message)) || (e && e.message) || '';
+  console.error('stripe ' + what, e && e.type, msg);
+  if (e && (e.type === 'StripeAuthenticationError' || (e.statusCode === 401))) {
+    throw new HttpsError('failed-precondition', 'Stripe refused the key saved on the server. Set STRIPE_SECRET again and deploy.');
+  }
+  if (e && e.type === 'StripePermissionError') {
+    throw new HttpsError('failed-precondition', 'Stripe says this account can’t do that yet: ' + (msg || 'permission denied') + '.');
+  }
+  throw new HttpsError('failed-precondition', msg ? 'Stripe says: ' + String(msg).slice(0, 300) : 'Stripe couldn’t be reached. Try again in a minute.');
+}
+
 exports.stripeConnect = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
   const { cid, country } = req.data || {};
   await staffOf(req, cid, ['owner']);
@@ -328,18 +341,23 @@ exports.stripeConnect = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET
   const cref = db.doc(`companies/${cid}`); const co = (await cref.get()).data() || {};
   let accountId = co.stripe && co.stripe.accountId;
   if (!accountId) {
-    const acct = await stripe.accounts.create({
-      country: ['MT', 'IE', 'GB'].includes(country) ? country : 'MT',
-      email: clean((co.invoice && co.invoice.email) || (co.contact && co.contact.email), 120) || undefined,
-      business_profile: { name: clean(co.name, 100) || undefined },
-      controller: { fees: { payer: 'account' }, losses: { payments: 'stripe' }, stripe_dashboard: { type: 'full' } },
-      metadata: { cid },
-    });
+    let acct;
+    try {
+      acct = await stripe.accounts.create({
+        country: ['MT', 'IE', 'GB'].includes(country) ? country : 'MT',
+        email: clean((co.invoice && co.invoice.email) || (co.contact && co.contact.email), 120) || undefined,
+        business_profile: { name: clean(co.name, 100) || undefined },
+        controller: { fees: { payer: 'account' }, losses: { payments: 'stripe' }, stripe_dashboard: { type: 'full' } },
+        metadata: { cid },
+      });
+    } catch (e) { stripeFail(e, 'accounts.create'); }
     accountId = acct.id;
     await cref.update({ stripe: stripeState(acct) });
   }
-  const link = await stripe.accountLinks.create({ account: accountId, type: 'account_onboarding', refresh_url: `${SITE}/app/#/pos`, return_url: `${SITE}/app/#/pos` });
-  return { url: link.url };
+  try {
+    const link = await stripe.accountLinks.create({ account: accountId, type: 'account_onboarding', refresh_url: `${SITE}/app/#/pos`, return_url: `${SITE}/app/#/pos` });
+    return { url: link.url };
+  } catch (e) { return stripeFail(e, 'accountLinks.create'); }
 });
 
 // Checks whether the company's Stripe account can take card payments yet.
@@ -348,13 +366,16 @@ exports.stripeStatus = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET]
   await staffOf(req, cid, ['owner', 'office']);
   const cref = admin.firestore().doc(`companies/${cid}`); const co = (await cref.get()).data() || {};
   if (!co.stripe || !co.stripe.accountId) return { chargesEnabled: false };
-  const acct = await stripeClient().accounts.retrieve(co.stripe.accountId);
-  const s = stripeState(acct); await cref.update({ stripe: s });
-  return { chargesEnabled: s.chargesEnabled };
+  try {
+    const acct = await stripeClient().accounts.retrieve(co.stripe.accountId);
+    const s = stripeState(acct); await cref.update({ stripe: s });
+    return { chargesEnabled: s.chargesEnabled };
+  } catch (e) { return stripeFail(e, 'accounts.retrieve'); }
 });
 
 // Creates the Stripe payment page for one POS payment, on the company's own Stripe account.
 exports.posCheckout = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  // Stripe problems come back in plain words; see stripeFail.
   const { cid, tillId } = req.data || {};
   await staffOf(req, cid, ['owner', 'office']);
   const db = admin.firestore();
@@ -367,15 +388,18 @@ exports.posCheckout = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] 
   const cents = Math.round(Number(t.total) * 100);
   if (!(cents >= 50)) throw new HttpsError('invalid-argument', 'Card payments must be at least €0.50.');
   const name = clean(co.data().name, 80);
-  const session = await stripeClient().checkout.sessions.create({
-    mode: 'payment',
-    line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: cents, product_data: { name: `${name} · ${clean(t.no, 20)}`, description: clean((t.ref && t.ref.label) || 'Payment', 120) } } }],
-    customer_email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t.email || '') ? t.email : undefined,
-    payment_intent_data: { description: `${name} ${clean(t.no, 20)}`, metadata: { cid, tillId } },
-    metadata: { cid, tillId },
-    success_url: `${SITE}/paid/?c=${encodeURIComponent(name)}`,
-    cancel_url: `${SITE}/paid/?c=${encodeURIComponent(name)}&cancel=1`,
-  }, { stripeAccount: acct.accountId });
+  let session;
+  try {
+    session = await stripeClient().checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: cents, product_data: { name: `${name} · ${clean(t.no, 20)}`, description: clean((t.ref && t.ref.label) || 'Payment', 120) } } }],
+      customer_email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t.email || '') ? t.email : undefined,
+      payment_intent_data: { description: `${name} ${clean(t.no, 20)}`, metadata: { cid, tillId } },
+      metadata: { cid, tillId },
+      success_url: `${SITE}/paid/?c=${encodeURIComponent(name)}`,
+      cancel_url: `${SITE}/paid/?c=${encodeURIComponent(name)}&cancel=1`,
+    }, { stripeAccount: acct.accountId });
+  } catch (e) { return stripeFail(e, 'checkout.sessions.create'); }
   await td.ref.update({ stripe: { url: session.url, sessionId: session.id, accountId: acct.accountId } });
   return { url: session.url, sessionId: session.id };
 });
