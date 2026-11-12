@@ -573,6 +573,14 @@ a.qtr:hover{background:var(--soft)}
 .ca-nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,1fr);background:var(--ca-card);border-top:1px solid var(--ca-line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
 .ca-nav button{font:inherit;position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:var(--ca-muted);font-size:11.5px;font-weight:600;padding:6px 2px;border-radius:10px;cursor:pointer}
 .ca-nav button.on{color:var(--brand)}
+.ca-nav.five{grid-template-columns:repeat(5,1fr)}
+.ca-nav.five button{font-size:10.5px}
+.ca-pay,.ca-owe{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--ca-card);border:1px solid var(--ca-line);border-radius:14px;padding:12px 14px;font:inherit;color:inherit}
+.ca-pay b,.ca-owe b{display:block;font-size:16px}
+.ca-pay small,.ca-owe small{display:block;color:var(--ca-muted);font-size:13px;margin-top:2px}
+.ca-owe em{font-style:normal;font-weight:800;font-size:17px;color:var(--brand);display:flex;align-items:center}
+button.ca-owe{cursor:pointer}
+button.ca-owe.hot{border-color:var(--brand)}
 .ca-nav i{position:absolute;top:2px;right:calc(50% - 22px);background:#b42318;color:#fff;font-style:normal;font-size:11px;min-width:18px;height:18px;border-radius:99px;display:grid;place-items:center}
 .ca-sheet{background:var(--ca-bg)}
 .ca.solo{padding-bottom:0}
@@ -760,6 +768,9 @@ body.pitch .topbar{top:64px}
 .qdep-out{color:var(--muted);font-size:14px}
 .qdep-out b{color:var(--ink)}
 .dep-alert .row{gap:8px;flex-wrap:wrap}
+.dep-paid{display:block}
+.dep-line{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid rgba(0,0,0,.08);padding-top:8px;font-size:14px}
+.dep-line .row{gap:6px;align-items:center}
 .alert.ok{border-color:#22a35a;background:rgba(34,163,90,.08)}
 .qp-totals .dep dt{color:#475569}
 .qp-totals .dep dd{font-weight:700}
