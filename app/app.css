@@ -751,6 +751,18 @@ body.pitch .topbar{top:64px}
 .pos-pay{display:grid;grid-template-columns:260px minmax(0,1fr);gap:26px;align-items:center}
 .pos-qr{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;width:260px;max-width:100%}
 .pos-qr svg{width:100%;height:auto;display:block}
+.pos-tap{display:flex;gap:18px;align-items:flex-start;border-color:var(--brand)}
+.pos-tap-ic{flex:none;width:58px;height:58px;border-radius:50%;background:var(--brand);color:var(--brand-ink,#fff);display:grid;place-items:center}
+.pos-or{margin:2px 0;text-align:center;color:var(--muted);font-size:14px}
+/* Deposit on a quote */
+.qdep-row{align-items:center;gap:10px;flex-wrap:wrap}
+.qdep-row select{max-width:72px}
+.qdep-out{color:var(--muted);font-size:14px}
+.qdep-out b{color:var(--ink)}
+.dep-alert .row{gap:8px;flex-wrap:wrap}
+.alert.ok{border-color:#22a35a;background:rgba(34,163,90,.08)}
+.qp-totals .dep dt{color:#475569}
+.qp-totals .dep dd{font-weight:700}
 .spin-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--warn-mid);margin-right:6px;animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.spin-dot{animation:none}}
@@ -759,4 +771,4 @@ body.pitch .topbar{top:64px}
 .pos-fiscal{border-left:4px solid var(--warn-mid)}.pos-fiscal.ok{border-left-color:var(--ok-mid)}
 .pos-fiscal form input{font:inherit;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:220px}
 .pos-sum{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media (max-width:760px){.pos-methods{grid-template-columns:1fr}.pos-pay{grid-template-columns:1fr;justify-items:center;text-align:center}.pos-pay .row{justify-content:center}.pos-sum{grid-template-columns:1fr 1fr}.pos-l{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.pos-methods{grid-template-columns:1fr}.pos-pay{grid-template-columns:1fr;justify-items:center;text-align:center}.pos-pay .row{justify-content:center}.pos-tap{flex-direction:column;align-items:center;text-align:center}.pos-tap .btn{width:100%}.pos-sum{grid-template-columns:1fr 1fr}.pos-l{grid-template-columns:1fr 1fr}}

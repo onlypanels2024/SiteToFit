@@ -100,14 +100,15 @@ service cloud.firestore {
     // Quotes pack: the link a client opens to view a quote and accept or decline it. Anyone holding the 48-character
     // code can open that one quote (never list them), record that it was opened, and answer once before it expires.
     match /quoteLinks/{token} {
-      function qStaff(cid) { return isAdmin() || manager(cid); }
+      function qStaff(cid) { return isAdmin() || manager(cid) || (hasProfile() && me().companyId == cid && me().get('active', true) != false && me().role == 'sales'); }
+      function qMine(d) { return isAdmin() || manager(d.cid) || d.salesUid == request.auth.uid; }
       function client() { return request.resource.data; }
       allow get: if token.size() >= 32;
-      allow list: if signedIn() && qStaff(resource.data.cid);
-      allow create: if signedIn() && qStaff(request.resource.data.cid) && request.resource.data.status == 'sent';
-      allow delete: if signedIn() && qStaff(resource.data.cid);
+      allow list: if signedIn() && qStaff(resource.data.cid) && qMine(resource.data);
+      allow create: if signedIn() && qStaff(request.resource.data.cid) && qMine(request.resource.data) && request.resource.data.status == 'sent';
+      allow delete: if signedIn() && qStaff(resource.data.cid) && qMine(resource.data);
       allow update: if
-        (signedIn() && qStaff(resource.data.cid) && request.resource.data.cid == resource.data.cid)
+        (signedIn() && qStaff(resource.data.cid) && qMine(resource.data) && request.resource.data.cid == resource.data.cid)
         || (resource.data.status == 'sent' && request.time.toMillis() < resource.data.expiresAt
             && ((resource.data.openedAt == null && onlyChanging(['openedAt']) && client().openedAt is number)
                 || (onlyChanging(['status', 'acceptName', 'acceptedAt', 'clientDevice']) && client().status == 'accepted'
@@ -159,13 +160,13 @@ service cloud.firestore {
 
       // Invoice numbers (and, in the Quotes pack, quote numbers in meta/quotes), counted up one at a time.
       match /meta/{doc} {
-        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team']);
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team', 'sales']);
         allow create: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team'] && request.resource.data.invoice == 1)
           || (manager(cid) && doc == 'quotes' && request.resource.data.keys().hasOnly(['quote']) && request.resource.data.quote == 1)
-          || (manager(cid) && doc == 'tills' && request.resource.data.keys().hasOnly(['receipt']) && request.resource.data.receipt == 1);
+          || ((manager(cid) || (inCompany(cid) && role() == 'sales')) && doc == 'tills' && request.resource.data.keys().hasOnly(['receipt']) && request.resource.data.receipt == 1);
         allow update: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'team'] && request.resource.data.invoice == resource.data.invoice + 1)
           || (manager(cid) && doc == 'quotes' && onlyChanging(['quote']) && request.resource.data.quote == resource.data.quote + 1)
-          || (manager(cid) && doc == 'tills' && onlyChanging(['receipt']) && request.resource.data.receipt == resource.data.receipt + 1);
+          || ((manager(cid) || (inCompany(cid) && role() == 'sales')) && doc == 'tills' && onlyChanging(['receipt']) && request.resource.data.receipt == resource.data.receipt + 1);
       }
       match /clients/{id} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
@@ -217,10 +218,16 @@ service cloud.firestore {
           && request.resource.data.status == 'queued' && request.resource.data.kind in ['contract-link', 'contract-signed']
           && request.resource.data.by == request.auth.uid
           && (role() != 'sales' || get(/databases/$(database)/documents/companies/$(cid)/contracts/$(request.resource.data.contractId)).data.salesUid == request.auth.uid);
-        // Quotes pack: emailing a quote to its client (owner and office).
-        allow create: if (isAdmin() || manager(cid))
+        // Quotes pack: emailing a quote to its client. A salesperson may only email their own quote.
+        allow create: if (isAdmin() || manager(cid) || (inCompany(cid) && role() == 'sales'))
           && request.resource.data.status == 'queued' && request.resource.data.kind == 'quote-link'
-          && request.resource.data.by == request.auth.uid;
+          && request.resource.data.by == request.auth.uid
+          && (role() != 'sales' || get(/databases/$(database)/documents/companies/$(cid)/quotes/$(request.resource.data.quoteId)).data.salesUid == request.auth.uid);
+        // POS pack: the receipt for a payment, emailed to the client with the office copied in.
+        allow create: if (isAdmin() || manager(cid) || (inCompany(cid) && role() == 'sales'))
+          && request.resource.data.status == 'queued' && request.resource.data.kind == 'receipt'
+          && request.resource.data.by == request.auth.uid
+          && (role() != 'sales' || get(/databases/$(database)/documents/companies/$(cid)/tills/$(request.resource.data.tillId)).data.by == request.auth.uid);
         allow update, delete: if false; // only the email service changes these
       }
       // Each person's approved payslips: they see their own.
@@ -275,14 +282,41 @@ service cloud.firestore {
               && resource.data.status != 'signed');
         allow delete: if isAdmin();
       }
-      // ---- Quotes pack (owner and office) ----
-      match /quoteSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
-      match /quotes/{id} { allow read, write: if isAdmin() || manager(cid); }
+      // ---- Quotes pack. A salesperson works only on their own quotes, and once the deposit is paid the quote
+      // is locked to the office. ----
+      match /quoteSettings/{doc} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+        allow write: if isAdmin() || manager(cid);
+      }
+      match /quotes/{id} {
+        function seller() { return inCompany(cid) && role() == 'sales'; }
+        allow read: if isAdmin() || manager(cid) || (seller() && resource.data.salesUid == request.auth.uid);
+        allow create: if isAdmin() || manager(cid) || (seller() && request.resource.data.salesUid == request.auth.uid && !('depositPaid' in request.resource.data));
+        allow update: if isAdmin() || manager(cid)
+          || (seller() && resource.data.salesUid == request.auth.uid && request.resource.data.salesUid == request.auth.uid
+              && (!('depositPaid' in resource.data) || resource.data.depositPaid == null));
+        allow delete: if isAdmin() || manager(cid);
+      }
       // ---- Client app pack ----
       match /clientAppSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       // ---- POS pack (owner and office). Card payments are marked paid by the payment service. ----
-      match /posSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
-      match /tills/{id} { allow read, create, update: if isAdmin() || manager(cid); allow delete: if isAdmin(); }
+      match /posSettings/{doc} {
+        allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
+        allow write: if isAdmin() || manager(cid);
+      }
+      match /tills/{id} {
+        // A salesperson may take a deposit on a quote: their own payments only, and once it is paid they can
+        // only add the receipt, never change the amount or cancel it.
+        function seller() { return inCompany(cid) && role() == 'sales'; }
+        allow read: if isAdmin() || manager(cid) || (seller() && resource.data.by == request.auth.uid);
+        allow create: if isAdmin() || manager(cid)
+          || (seller() && request.resource.data.by == request.auth.uid && request.resource.data.ref.kind == 'quote'
+              && request.resource.data.fiscalNo == '');
+        allow update: if isAdmin() || manager(cid)
+          || (seller() && resource.data.by == request.auth.uid
+              && (resource.data.status != 'paid' || onlyChanging(['receipt', 'receiptMailed', 'proof', 'note', 'date'])));
+        allow delete: if isAdmin();
+      }
       match /jobs/{id} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'store'])
           || (inCompany(cid) && role() == 'team' && resource.data.team == me().team);

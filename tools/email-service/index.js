@@ -223,6 +223,31 @@ const euro2 = (n) => '€' + (Math.round((Number(n) || 0) * 100) / 100).toLocale
 const dayText = (iso) => (iso ? new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Malta' }) : '');
 const companyInbox = (c) => clean((c.invoice && c.invoice.email) || (c.contact && c.contact.email), 120);
 
+// The receipt for a payment (a quote's deposit, or any POS payment): emailed to the client, office always copied.
+exports.sendReceiptMail = onDocumentCreated({ document: 'companies/{cid}/mail/{id}', region: 'europe-west1', secrets: [RESEND_KEY], retry: false }, async (ev) => {
+  const ref = ev.data.ref; const m = ev.data.data(); const { cid } = ev.params;
+  if (!m || m.status !== 'queued' || m.kind !== 'receipt' || !m.tillId) return;
+  const fail = (msg) => ref.update({ status: 'error', error: String(msg).slice(0, 300), doneAt: Date.now() });
+  try {
+    const db = admin.firestore();
+    const [co, td] = await Promise.all([db.doc(`companies/${cid}`).get(), db.doc(`companies/${cid}/tills/${m.tillId}`).get()]);
+    if (!co.exists || !td.exists) return fail('Payment not found.');
+    const t = td.data(); const comp = co.data(); const name = clean((comp.invoice && comp.invoice.legalName) || comp.name);
+    if (t.status !== 'paid') return fail('This payment hasn’t been paid.');
+    if (!t.email || t.email.toLowerCase() !== String(m.to).toLowerCase()) return fail('The email address doesn’t match the payment.');
+    if (!t.receipt || !t.receipt.path || !t.receipt.path.startsWith(`companies/${cid}/receipts/`)) return fail('The receipt PDF isn’t ready.');
+    const [buf] = await admin.storage().bucket().file(t.receipt.path).download();
+    const office = companyInbox(comp);
+    const first = clean(t.clientName).split(' ')[0] || 'there';
+    const what = t.ref && t.ref.kind === 'quote' ? `deposit on quote ${clean(t.ref.label, 40).replace(/^Deposit · /, '')}` : 'payment';
+    const id = await resend({ from: `${clean(comp.name)} <receipts@siteto.fit>`, to: [t.email], ...(office && office.toLowerCase() !== t.email.toLowerCase() ? { cc: [office] } : {}), ...(office ? { reply_to: office } : {}),
+      subject: `Receipt ${clean(t.no, 30)} from ${name}`,
+      text: `Hi ${first},\n\nThank you for your ${what} of ${euro2(t.total)}, received by ${clean(t.method === 'card' ? 'card' : t.method === 'cash' ? 'cash' : 'bank transfer', 20)}.\n\nYour receipt ${clean(t.no, 30)} is attached as a PDF.\n\nIf you have any questions, reply to this email.\n\n${name}\n\nSent with SiteToFit`,
+      attachments: [{ filename: `Receipt ${clean(t.no, 30)}.pdf`, content: buf.toString('base64') }] });
+    return ref.update({ status: 'sent', sentAt: Date.now(), providerId: id, cc: office || '' });
+  } catch (e) { await fail(e.message || e); }
+});
+
 exports.sendQuoteMail = onDocumentCreated({ document: 'companies/{cid}/mail/{id}', region: 'europe-west1', secrets: [RESEND_KEY], retry: false }, async (ev) => {
   const ref = ev.data.ref; const m = ev.data.data(); const { cid } = ev.params;
   if (!m || m.status !== 'queued' || m.kind !== 'quote-link' || !m.quoteId) return;
@@ -355,7 +380,87 @@ exports.posCheckout = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] 
   return { url: session.url, sessionId: session.id };
 });
 
-// Stripe calls this when a client has paid (Connect webhook: checkout.session.completed and account.updated).
+// ---- Tap to Pay (SiteToFit Android app): the staff phone itself reads the client's card or phone over NFC. ----
+// The phone asks for a short-lived token, we create the payment on the company's own Stripe account, the phone
+// collects the card, then terminalConfirm (and the webhook, as a backup) marks the payment as paid.
+async function tapCompany(req, cid) {
+  await staffOf(req, cid, ['owner', 'office']);
+  const cref = admin.firestore().doc(`companies/${cid}`); const co = await cref.get();
+  const acct = co.exists && co.data().stripe;
+  if (!acct || !acct.chargesEnabled) throw new HttpsError('failed-precondition', 'Card payments aren’t switched on yet. Connect Stripe in POS settings.');
+  return { cref, co: co.data(), acct };
+}
+async function tapMarkPaid(cid, tillId, pi, account) {
+  const db = admin.firestore(); const tref = db.doc(`companies/${cid}/tills/${tillId}`);
+  return db.runTransaction(async (tx) => {
+    const td = await tx.get(tref); if (!td.exists) return false;
+    const t = td.data();
+    if (t.status === 'paid') return true;
+    if (t.status !== 'pending' || !t.stripe || t.stripe.tapIntent !== pi.id || account !== t.stripe.accountId) return false;
+    const amount = (pi.amount_received || pi.amount || 0) / 100;
+    let jref = null; let j = null;
+    if (t.ref && t.ref.kind === 'job' && t.ref.id) { jref = db.doc(`companies/${cid}/jobs/${t.ref.id}`); const jd = await tx.get(jref); j = jd.exists ? jd.data() : null; }
+    tx.update(tref, { status: 'paid', paidAt: Date.now(), stripe: { ...t.stripe, paymentIntent: pi.id, amountPaid: amount, tap: true } });
+    if (j && !(j.payments || []).some((p) => p.tillId === tillId)) {
+      tx.update(jref, { paid: (Number(j.paid) || 0) + amount, payments: [...(j.payments || []), { amount, at: Date.now(), method: 'card', note: `Card (Tap to Pay) · receipt ${t.no}`, tillId }] });
+    }
+    return true;
+  });
+}
+
+// The Android app asks for this each time Stripe's card reader software needs to sign in.
+exports.terminalToken = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  const { cid } = req.data || {};
+  const { acct } = await tapCompany(req, cid);
+  const tok = await stripeClient().terminal.connectionTokens.create({}, { stripeAccount: acct.accountId });
+  return { secret: tok.secret };
+});
+
+// Prepares one Tap to Pay payment: makes sure the company has a Stripe "location" (its address), then creates the payment.
+exports.terminalIntent = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  const { cid, tillId } = req.data || {};
+  const { cref, co, acct } = await tapCompany(req, cid);
+  const db = admin.firestore(); const stripe = stripeClient();
+  const td = await db.doc(`companies/${cid}/tills/${tillId}`).get();
+  if (!td.exists) throw new HttpsError('not-found', 'Payment not found.');
+  const t = td.data();
+  if (t.status !== 'pending' || t.method !== 'card') throw new HttpsError('failed-precondition', 'This payment isn’t waiting for a card payment.');
+  const cents = Math.round(Number(t.total) * 100);
+  if (!(cents >= 50)) throw new HttpsError('invalid-argument', 'Card payments must be at least €0.50.');
+  const name = clean(co.name, 80);
+  let locationId = co.terminal && co.terminal.accountId === acct.accountId ? co.terminal.locationId : '';
+  if (!locationId) {
+    const ps = await db.doc(`companies/${cid}/posSettings/main`).get();
+    const a = (ps.exists && ps.data().tap) || {};
+    const line1 = clean(a.line1, 100); const city = clean(a.city, 60); const postcode = clean(a.postcode, 20);
+    if (!line1 || !city || !postcode) throw new HttpsError('failed-precondition', 'Add your business address under “Tap to Pay” in POS settings first.');
+    const loc = await stripe.terminal.locations.create({ display_name: name || 'Main', address: { line1, city, postal_code: postcode, country: acct.country || 'MT' } }, { stripeAccount: acct.accountId });
+    locationId = loc.id;
+    await cref.update({ terminal: { locationId, accountId: acct.accountId } });
+  }
+  const pi = await stripe.paymentIntents.create({
+    amount: cents, currency: 'eur', payment_method_types: ['card_present'], capture_method: 'automatic',
+    description: `${name} ${clean(t.no, 20)}`, metadata: { cid, tillId, tap: '1' },
+  }, { stripeAccount: acct.accountId });
+  await td.ref.update({ 'stripe.tapIntent': pi.id, 'stripe.accountId': acct.accountId });
+  return { clientSecret: pi.client_secret, intentId: pi.id, locationId };
+});
+
+// After the phone says the card went through, check with Stripe and mark the payment as paid.
+exports.terminalConfirm = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET] }, async (req) => {
+  const { cid, tillId } = req.data || {};
+  const { acct } = await tapCompany(req, cid);
+  const td = await admin.firestore().doc(`companies/${cid}/tills/${tillId}`).get();
+  if (!td.exists) throw new HttpsError('not-found', 'Payment not found.');
+  const t = td.data();
+  if (t.status === 'paid') return { paid: true };
+  if (!t.stripe || !t.stripe.tapIntent) return { paid: false };
+  const pi = await stripeClient().paymentIntents.retrieve(t.stripe.tapIntent, { stripeAccount: acct.accountId });
+  if (pi.status !== 'succeeded') return { paid: false, status: pi.status };
+  return { paid: await tapMarkPaid(cid, tillId, pi, acct.accountId) };
+});
+
+// Stripe calls this when a client has paid (Connect webhook: checkout.session.completed, account.updated and, for Tap to Pay, payment_intent.succeeded).
 exports.stripeWebhook = onRequest({ region: 'europe-west1', secrets: [STRIPE_SECRET, STRIPE_WEBHOOK_SECRET] }, async (req, res) => {
   let ev;
   try { ev = stripeClient().webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET.value()); }
@@ -379,6 +484,10 @@ exports.stripeWebhook = onRequest({ region: 'europe-west1', secrets: [STRIPE_SEC
           }
         });
       }
+    }
+    if (ev.type === 'payment_intent.succeeded') {
+      const pi = ev.data.object; const { cid, tillId, tap } = pi.metadata || {};
+      if (cid && tillId && tap === '1') await tapMarkPaid(cid, tillId, pi, ev.account);
     }
     if (ev.type === 'account.updated') {
       const a = ev.data.object; const cid = a.metadata && a.metadata.cid;
