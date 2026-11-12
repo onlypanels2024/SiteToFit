@@ -318,7 +318,15 @@ async function staffOf(req, cid, roles) {
   if (!ok) throw new HttpsError('permission-denied', 'You can’t do this for this company.');
   return uid;
 }
-const stripeState = (a) => ({ accountId: a.id, chargesEnabled: !!a.charges_enabled, payoutsEnabled: !!a.payouts_enabled, detailsSubmitted: !!a.details_submitted, country: a.country || '', checkedAt: Date.now() });
+// Accounts made the older way (Accounts v1). Kept so companies connected before the change keep working.
+const stripeState = (a) => ({ accountId: a.id, chargesEnabled: !!a.charges_enabled, payoutsEnabled: !!a.payouts_enabled, detailsSubmitted: !!a.details_submitted, country: a.country || '', checkedAt: Date.now(), v: 1 });
+// Accounts made the way Stripe now asks for (Accounts v2).
+function stripeState2(a, country) {
+  const cap = (((a.configuration || {}).merchant || {}).capabilities || {}).card_payments || {};
+  const due = ((a.requirements || {}).entries || []).filter((e) => e && e.awaiting_action_from === 'user').length;
+  return { accountId: a.id, chargesEnabled: cap.status === 'active', payoutsEnabled: cap.status === 'active', detailsSubmitted: !due,
+    country: (a.identity && a.identity.country) || country || '', checkedAt: Date.now(), v: 2 };
+}
 
 // The owner connects (or finishes connecting) the company's Stripe account. Returns Stripe's set-up page.
 // Turns a Stripe error into something the person reading the screen can act on.
@@ -339,23 +347,37 @@ exports.stripeConnect = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET
   await staffOf(req, cid, ['owner']);
   const stripe = stripeClient(); const db = admin.firestore();
   const cref = db.doc(`companies/${cid}`); const co = (await cref.get()).data() || {};
+  const land = ['MT', 'IE', 'GB'].includes(country) ? country : 'MT';
   let accountId = co.stripe && co.stripe.accountId;
+  const old = !!accountId && co.stripe.v !== 2; // connected before the change
   if (!accountId) {
+    // The company is its own merchant: their name on the client's statement, Stripe takes its fee from their
+    // payment, and Stripe carries the loss on a bad payment. They get the full Stripe dashboard.
     let acct;
     try {
-      acct = await stripe.accounts.create({
-        country: ['MT', 'IE', 'GB'].includes(country) ? country : 'MT',
-        email: clean((co.invoice && co.invoice.email) || (co.contact && co.contact.email), 120) || undefined,
-        business_profile: { name: clean(co.name, 100) || undefined },
-        controller: { fees: { payer: 'account' }, losses: { payments: 'stripe' }, stripe_dashboard: { type: 'full' } },
+      acct = await stripe.v2.core.accounts.create({
+        display_name: clean(co.name, 100) || undefined,
+        contact_email: clean((co.invoice && co.invoice.email) || (co.contact && co.contact.email), 120) || undefined,
+        dashboard: 'full',
+        identity: { country: land },
+        defaults: { currency: 'eur', responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' } },
+        configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
+        include: ['configuration.merchant', 'requirements', 'identity'],
         metadata: { cid },
       });
-    } catch (e) { stripeFail(e, 'accounts.create'); }
+    } catch (e) { stripeFail(e, 'v2.accounts.create'); }
     accountId = acct.id;
-    await cref.update({ stripe: stripeState(acct) });
+    await cref.update({ stripe: stripeState2(acct, land) });
   }
   try {
-    const link = await stripe.accountLinks.create({ account: accountId, type: 'account_onboarding', refresh_url: `${SITE}/app/#/pos`, return_url: `${SITE}/app/#/pos` });
+    if (old) {
+      const link = await stripe.accountLinks.create({ account: accountId, type: 'account_onboarding', refresh_url: `${SITE}/app/#/pos`, return_url: `${SITE}/app/#/pos` });
+      return { url: link.url };
+    }
+    const link = await stripe.v2.core.accountLinks.create({
+      account: accountId,
+      use_case: { type: 'account_onboarding', account_onboarding: { refresh_url: `${SITE}/app/#/pos`, return_url: `${SITE}/app/#/pos` } },
+    });
     return { url: link.url };
   } catch (e) { return stripeFail(e, 'accountLinks.create'); }
 });
@@ -367,8 +389,14 @@ exports.stripeStatus = onCall({ region: 'europe-west1', secrets: [STRIPE_SECRET]
   const cref = admin.firestore().doc(`companies/${cid}`); const co = (await cref.get()).data() || {};
   if (!co.stripe || !co.stripe.accountId) return { chargesEnabled: false };
   try {
-    const acct = await stripeClient().accounts.retrieve(co.stripe.accountId);
-    const s = stripeState(acct); await cref.update({ stripe: s });
+    let s;
+    if (co.stripe.v === 2) {
+      const acct = await stripeClient().v2.core.accounts.retrieve(co.stripe.accountId, { include: ['configuration.merchant', 'requirements', 'identity'] });
+      s = stripeState2(acct, co.stripe.country);
+    } else {
+      s = stripeState(await stripeClient().accounts.retrieve(co.stripe.accountId));
+    }
+    await cref.update({ stripe: s });
     return { chargesEnabled: s.chargesEnabled };
   } catch (e) { return stripeFail(e, 'accounts.retrieve'); }
 });
