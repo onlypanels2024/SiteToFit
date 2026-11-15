@@ -150,6 +150,26 @@ service cloud.firestore {
       allow read, update, delete: if signedIn() && (isAdmin() || manager(resource.data.cid));
     }
 
+    // "Ask us" pack: the company's own assistant page. The 48-character code in the link is the key. Anyone with
+    // the link may read the page's details; only the company's owner and office switch it on, change it or switch
+    // it off. Nobody writes conversations from the browser — the server writes them with the admin SDK.
+    match /askLinks/{token} {
+      allow get: if token.size() >= 32;
+      allow list: if signedIn() && (isAdmin() || manager(resource.data.cid));
+      allow create: if signedIn() && (isAdmin() || manager(request.resource.data.cid));
+      allow update: if signedIn() && (isAdmin() || manager(resource.data.cid)) && request.resource.data.cid == resource.data.cid;
+      allow delete: if signedIn() && (isAdmin() || manager(resource.data.cid));
+    }
+    match /askChats/{id} {
+      allow read: if signedIn() && (isAdmin() || manager(resource.data.cid));
+      allow update: if signedIn() && (isAdmin() || manager(resource.data.cid)) && onlyChanging(['status']);
+      allow create, delete: if false;
+    }
+    // How many questions a company's assistant answered today, so one page can't run up a bill. Server only.
+    match /askUsage/{id} {
+      allow read, write: if false;
+    }
+
     match /companies/{cid} {
       allow read: if isAdmin() || inCompany(cid) || (hasProfile() && me().companyId == cid);
       allow create, delete: if isAdmin();
@@ -299,6 +319,8 @@ service cloud.firestore {
       }
       // ---- Client app pack ----
       match /clientAppSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
+      // ---- "Ask us" pack: what the assistant is told to say ----
+      match /askSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       // ---- POS pack (owner and office). Card payments are marked paid by the payment service. ----
       match /posSettings/{doc} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);

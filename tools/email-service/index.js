@@ -179,6 +179,129 @@ exports.helpChat = onCall({ region: 'europe-west1', secrets: [ANTHROPIC_KEY], ti
   return { text: text || 'Sorry, I couldn’t answer that. Tap “Send to SiteToFit support”.', handoff };
 });
 
+// ---- "Ask us" pack: the company's own assistant page (siteto.fit/ask/?c=…). Answers a new customer from what
+// the company wrote about itself, takes their details, and can book a site visit straight into the calendar.
+// No sign-in: anyone with the link can use it, so everything here is rate limited and kept small. ----
+
+const DAYNAME = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const isoDay = (iso) => new Date(iso + 'T12:00:00').getDay();
+const addDays = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+
+// Days the company could see someone, skipping days that are already full.
+async function freeDays(cid, set) {
+  const days = String(set.slotDays || '1,2,3,4,5').split(',').filter((x) => x !== '');
+  const perDay = Math.max(1, Math.min(20, Number(set.perDay) || 3));
+  const from = addDays(1); const to = addDays(21);
+  const snap = await admin.firestore().collection(`companies/${cid}/visits`).where('date', '>=', from).where('date', '<=', to).get();
+  const used = {};
+  snap.forEach((d) => { const v = d.data(); if (v.status !== 'cancelled') used[v.date] = (used[v.date] || 0) + 1; });
+  const out = [];
+  for (let i = 1; i <= 21 && out.length < 6; i++) {
+    const iso = addDays(i);
+    if (!days.includes(String(isoDay(iso)))) continue;
+    if ((used[iso] || 0) >= perDay) continue;
+    out.push(iso);
+  }
+  return out;
+}
+
+exports.askChat = onCall({ region: 'europe-west1', secrets: [ANTHROPIC_KEY], timeoutSeconds: 60 }, async (req) => {
+  const { token, chatId, messages } = req.data || {};
+  if (!/^[a-f0-9]{48}$/.test(String(token || ''))) throw new HttpsError('invalid-argument', 'Bad link.');
+  if (!/^[a-f0-9]{32}$/.test(String(chatId || ''))) throw new HttpsError('invalid-argument', 'Bad chat.');
+  const db = admin.firestore();
+  const linkSnap = await db.doc(`askLinks/${token}`).get();
+  if (!linkSnap.exists || linkSnap.data().active === false) throw new HttpsError('not-found', 'This link isn’t working any more.');
+  const { cid } = linkSnap.data();
+  const comp = (await db.doc(`companies/${cid}`).get()).data() || {};
+  if (!comp.features || !comp.features.aiask) throw new HttpsError('failed-precondition', 'This assistant is switched off.');
+  const set = (await db.doc(`companies/${cid}/askSettings/main`).get()).data() || {};
+
+  // Two limits, so a stranger can't run up a bill: per conversation, and per company per day.
+  const msgs = (Array.isArray(messages) ? messages : []).slice(-20)
+    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 800) }))
+    .filter((m) => m.content.trim());
+  while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+  if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw new HttpsError('invalid-argument', 'Say something first.');
+  if (msgs.filter((m) => m.role === 'user').length > 40) throw new HttpsError('resource-exhausted', 'This chat is long. Please call us instead.');
+  const day = new Date().toISOString().slice(0, 10);
+  const cRef = db.doc(`askUsage/${cid}_${day}`);
+  const used = await db.runTransaction(async (tx) => { const d = await tx.get(cRef); const n = ((d.exists && d.data().n) || 0) + 1; tx.set(cRef, { n, cid, day }); return n; });
+  if (used > 400) return { reply: 'We’ve had a lot of questions today. Please call or WhatsApp us and we’ll help you straight away.' };
+
+  const chatRef = db.doc(`askChats/${chatId}`);
+  const chat = (await chatRef.get()).data() || null;
+  if (chat && chat.cid !== cid) throw new HttpsError('permission-denied', 'Bad chat.');
+  const alreadyBooked = !!(chat && chat.visitId);
+  const slots = set.bookVisits !== false && !alreadyBooked ? await freeDays(cid, set) : [];
+
+  const system = 'You are the assistant on the public page of "' + clean(comp.name, 60) + '", a company in Malta. You are talking to someone who may become a customer.\n'
+    + 'WHAT THE COMPANY TOLD YOU ABOUT ITSELF (your only source about them):\n"""\n' + clean(set.about, 1500) + '\n"""\n'
+    + (set.areas ? 'Areas they cover: ' + clean(set.areas, 200) + '\n' : '')
+    + (set.hours ? 'Opening hours: ' + clean(set.hours, 120) + '\n' : '')
+    + (set.phone ? 'Their phone: ' + clean(set.phone, 40) + '\n' : '')
+    + 'Rules:\n'
+    + '- Warm, short, plain language. Two or three sentences at a time. No emojis. Reply in the person’s language (English or Maltese).\n'
+    + '- Answer ONLY from what the company told you. Never invent prices, timescales, products or promises. If you do not know, say so plainly and offer to have someone call them.\n'
+    + '- Your job is to get their name, phone number and what they need. Ask for one thing at a time, naturally, not as a form.\n'
+    + (slots.length
+      ? '- They can book a free site visit. Days you may offer: ' + slots.map((d) => DAYNAME[isoDay(d)] + ' ' + d).join(', ') + '. Times you may offer: ' + clean(set.slotTimes || 'Morning, Afternoon', 120) + '. Only offer these.\n'
+      : '- You cannot book anything in this chat; offer to have someone call them instead.\n')
+    + '- You are an assistant, not a person; say so if asked. Never ask for card numbers, ID card numbers or passwords.\n'
+    + '- Decline anything not about this company and its work.\n'
+    + 'ALWAYS end your reply with one line of JSON on its own, no code fences:\n'
+    + '[[DATA]]{"name":"","phone":"","what":"","address":"","date":"","time":"","book":false}\n'
+    + 'Fill only what the person actually told you; leave the rest empty. "date" must be one of the days offered, in YYYY-MM-DD. '
+    + 'Set "book" to true only when they have agreed to a visit AND you have their name, phone and a date from the list.';
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': ANTHROPIC_KEY.value(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 600, system, messages: msgs }),
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) { console.error('anthropic ask', res.status, out); throw new HttpsError('internal', 'The assistant isn’t available right now.'); }
+  let text = (out.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  let data = {};
+  const cut = text.lastIndexOf('[[DATA]]');
+  if (cut >= 0) { try { data = JSON.parse(text.slice(cut + 8).trim()) || {}; } catch (e) { data = {}; } text = text.slice(0, cut).trim(); }
+  if (!text) text = 'Sorry, could you say that again?';
+
+  const name = clean(data.name, 80); const phone = clean(data.phone, 40); const what = clean(data.what, 300); const address = clean(data.address, 200);
+  const nowMsgs = [...msgs.map((m) => ({ role: m.role, text: m.content, at: Date.now() })), { role: 'assistant', text, at: Date.now() }].slice(-40);
+  const base = { cid, token, at: (chat && chat.at) || Date.now(), name, phone, what, address, messages: nowMsgs, updatedAt: Date.now() };
+
+  // Book the visit only when the model says so and we really have what we need.
+  let booked = null;
+  const wantsBook = !!data.book && !alreadyBooked && slots.includes(String(data.date || '')) && phone && name;
+  if (wantsBook) {
+    const time = clean(data.time, 40);
+    const client = await db.collection(`companies/${cid}/clients`).add({ name, phone, address, source: 'Assistant', createdAt: Date.now() });
+    const visit = await db.collection(`companies/${cid}/visits`).add({
+      clientId: client.id, clientName: name, phone, address, what: what || 'Enquiry from the assistant',
+      date: data.date, time, status: 'booked', note: '', files: [], createdAt: Date.now(), source: 'Assistant', askChatId: chatId,
+    });
+    const lead = await db.collection(`companies/${cid}/leads`).add({
+      name, phone, address, what, source: 'Assistant', status: 'visit', clientId: client.id,
+      nextStep: 'Site visit booked', nextDate: data.date, createdAt: Date.now(), askChatId: chatId,
+    });
+    await chatRef.set({ ...base, status: 'new', visitId: visit.id, leadId: lead.id, clientId: client.id }, { merge: true });
+    booked = { visit: true, date: data.date, time };
+  } else {
+    // No booking yet: still keep the enquiry, and make the lead as soon as there is a number to call back.
+    let leadId = chat && chat.leadId;
+    if (!leadId && phone && name) {
+      const lead = await db.collection(`companies/${cid}/leads`).add({
+        name, phone, address, what, source: 'Assistant', status: 'open', nextStep: 'Call back', nextDate: addDays(1), createdAt: Date.now(), askChatId: chatId,
+      });
+      leadId = lead.id;
+      booked = { visit: false };
+    }
+    await chatRef.set({ ...base, status: (chat && chat.status) || 'new', ...(leadId ? { leadId } : {}) }, { merge: true });
+  }
+  return { reply: text, booked };
+});
+
 // Phone alert to Gary when a help request arrives or the person writes again. No personal details are sent.
 exports.helpAlert = onDocumentWritten({ document: 'support/{id}', region: 'europe-west1', secrets: [RESEND_KEY], retry: false }, async (ev) => {
   const before = ev.data.before.exists ? ev.data.before.data() : null;
