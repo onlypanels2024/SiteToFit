@@ -94,6 +94,10 @@ main,footer{position:relative;z-index:1}
 .vplay:hover{transform:scale(1.07)}
 .vid.playing .vplay{display:none}
 @media (max-width:600px){.vplay{width:72px;height:72px;margin:-36px 0 0 -36px}}
+.vid.tall{aspect-ratio:9/16;max-width:340px;margin-left:auto;margin-right:auto;border-radius:28px}
+.vid.tall .vplay{width:78px;height:78px;margin:-39px 0 0 -39px}
+.tourline{margin-top:46px;padding-top:38px;border-top:1px solid var(--line2)}
+.tourline h3{font-size:clamp(26px,2.9vw,38px);line-height:1.08;letter-spacing:-.02em;margin-top:6px}
 .note{font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-top:14px;letter-spacing:.06em}
 .center{text-align:center}.center .lead{margin-left:auto;margin-right:auto}
 
@@ -261,6 +265,14 @@ footer a{color:var(--muted)}
     <h2 id="watch-h">See how SiteToFit runs a job, <em>from first enquiry to paid.</em></h2>
     <div class="vid"><video controls playsinline preload="none" poster="video/poster.webp" aria-label="SiteToFit product video, about one minute, no sound"><source src="video/sitetofit-product-video.mp4" type="video/mp4"></video><button class="vplay" type="button" aria-label="Play the video"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button></div>
     <p class="note">1 MIN 11 S · NO SOUND</p>
+
+    <div class="tourline">
+      <div class="eyebrow">Or take the full tour</div>
+      <h3>Every screen, <em>end to end.</em></h3>
+      <p class="lead">The office dashboard, the app your salespeople carry, the installers' jobs, and the app your client gets with your name on it.</p>
+      <div class="vid tall"><video controls playsinline preload="none" poster="video/tour-poster.webp" aria-label="Full SiteToFit tour, about two minutes, no sound"><source src="video/sitetofit-full-tour.mp4" type="video/mp4"></video><button class="vplay" type="button" aria-label="Play the full tour"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button></div>
+      <p class="note">2 MIN 11 S · NO SOUND</p>
+    </div>
   </div>
 </section>
 
@@ -459,7 +471,7 @@ document.documentElement.classList.add('js');
 (function(){var els=document.querySelectorAll('.rv');if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
  els.forEach(function(e){if(e.getBoundingClientRect().top<innerHeight)e.classList.add('in');else io.observe(e)});})();
-(function(){var w=document.querySelector('#watch .vid'),v=w.querySelector('video'),b=w.querySelector('.vplay');b.addEventListener('click',function(){v.play()});v.addEventListener('play',function(){w.classList.add('playing')});v.addEventListener('ended',function(){w.classList.remove('playing')});})();
+(function(){document.querySelectorAll('#watch .vid').forEach(function(w){var v=w.querySelector('video'),b=w.querySelector('.vplay');b.addEventListener('click',function(){v.play()});v.addEventListener('play',function(){w.classList.add('playing');document.querySelectorAll('#watch video').forEach(function(o){if(o!==v)o.pause()})});v.addEventListener('ended',function(){w.classList.remove('playing')})});})();
 (function(){var amt=document.getElementById('mi-amt'),mt=document.getElementById('mi-mt'),gz=document.getElementById('mi-gz'),rate=.65;
  function eur(n){return '€'+Math.round(n).toLocaleString('en-GB')}
  function upd(){var a=Math.max(0,Number(amt.value)||0);document.getElementById('mi-a').textContent=eur(a);document.getElementById('mi-rl').textContent='Tax credit at '+Math.round(rate*100)+'%';document.getElementById('mi-c').textContent='− '+eur(a*rate);document.getElementById('mi-r').textContent=eur(a*(1-rate))}
