@@ -205,6 +205,102 @@ async function freeDays(cid, set) {
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// The assistant that talks to the public — on the company's "Ask us" page, and by text message after a missed
+// call. Same brain either way: it answers only from what the company wrote about itself, gets the person's name
+// and number, and can book a site visit. One place, so the two packs can never drift apart.
+// ---------------------------------------------------------------------------
+async function runAssistant(o) {
+  const { db, cid, comp, set, msgs, chatRef, chat, chatId, source, idKey } = o;
+  const alreadyBooked = !!(chat && chat.visitId);
+  const slots = set.bookVisits !== false && !alreadyBooked ? await freeDays(cid, set) : [];
+  const byText = o.where === 'text';
+
+  const system = 'You are the assistant for "' + clean(comp.name, 60) + '", a company in Malta. You are talking to someone who may become a customer'
+    + (byText ? ', by text message, because they rang and nobody could get to the phone.\n' : ' on the company’s public page.\n')
+    + 'WHAT THE COMPANY TOLD YOU ABOUT ITSELF (your only source about them):\n"""\n' + clean(set.about, 1500) + '\n"""\n'
+    + (set.areas ? 'Areas they cover: ' + clean(set.areas, 200) + '\n' : '')
+    + (set.hours ? 'Opening hours: ' + clean(set.hours, 120) + '\n' : '')
+    + (set.phone ? 'Their phone: ' + clean(set.phone, 40) + '\n' : '')
+    + 'Rules:\n'
+    + (byText
+      ? '- This is SMS. Keep every reply under 300 characters, one or two sentences. No emojis, no links unless the company gave you one. Reply in the person’s language (English or Maltese).\n'
+        + '- They already rang, so they want something. Find out what, and get their name. You already have their number.\n'
+      : '- Warm, short, plain language. Two or three sentences at a time. No emojis. Reply in the person’s language (English or Maltese).\n'
+        + '- Your job is to get their name, phone number and what they need. Ask for one thing at a time, naturally, not as a form.\n')
+    + '- Answer ONLY from what the company told you. Never invent prices, timescales, products or promises. If you do not know, say so plainly and offer to have someone call them.\n'
+    + (slots.length
+      ? '- They can book a free site visit. Days you may offer: ' + slots.map((d) => DAYNAME[isoDay(d)] + ' ' + d).join(', ') + '. Times you may offer: ' + clean(set.slotTimes || 'Morning, Afternoon', 120) + '. Only offer these.\n'
+      : '- You cannot book anything here; offer to have someone call them instead.\n')
+    + '- You are an assistant, not a person; say so if asked. Never ask for card numbers, ID card numbers or passwords.\n'
+    + '- Decline anything not about this company and its work.\n'
+    + 'ALWAYS end your reply with one line of JSON on its own, no code fences:\n'
+    + '[[DATA]]{"name":"","phone":"","what":"","address":"","date":"","time":"","book":false}\n'
+    + 'Fill only what the person actually told you; leave the rest empty. "date" must be one of the days offered, in YYYY-MM-DD. '
+    + 'Set "book" to true only when they have agreed to a visit AND you have their name, phone and a date from the list.';
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': ANTHROPIC_KEY.value(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: byText ? 300 : 600, system, messages: msgs }),
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) { console.error('anthropic assistant', res.status, out); throw new HttpsError('internal', 'The assistant isn’t available right now.'); }
+  let text = (out.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  let data = {};
+  const cut = text.lastIndexOf('[[DATA]]');
+  if (cut >= 0) { try { data = JSON.parse(text.slice(cut + 8).trim()) || {}; } catch (e) { data = {}; } text = text.slice(0, cut).trim(); }
+  if (!text) text = 'Sorry, could you say that again?';
+
+  const name = clean(data.name, 80); const phone = clean(o.knownPhone || data.phone, 40); const what = clean(data.what, 300); const address = clean(data.address, 200);
+  const nowMsgs = [...msgs.map((m) => ({ role: m.role, text: m.content, at: Date.now() })), { role: 'assistant', text, at: Date.now() }].slice(-40);
+  const base = { cid, at: (chat && chat.at) || Date.now(), name, phone, what, address, messages: nowMsgs, updatedAt: Date.now(), ...(o.extra || {}) };
+
+  // Book the visit only when the model says so and we really have what we need.
+  let booked = null;
+  const wantsBook = !!data.book && !alreadyBooked && slots.includes(String(data.date || '')) && phone && name;
+  if (wantsBook) {
+    const time = clean(data.time, 40);
+    const client = await db.collection(`companies/${cid}/clients`).add({ name, phone, address, source, createdAt: Date.now() });
+    const visit = await db.collection(`companies/${cid}/visits`).add({
+      clientId: client.id, clientName: name, phone, address, what: what || 'Enquiry from the assistant',
+      date: data.date, time, status: 'booked', note: '', files: [], createdAt: Date.now(), source, [idKey]: chatId,
+    });
+    const lead = await db.collection(`companies/${cid}/leads`).add({
+      name, phone, address, what, source, status: 'visit', clientId: client.id,
+      nextStep: 'Site visit booked', nextDate: data.date, createdAt: Date.now(), [idKey]: chatId,
+    });
+    await chatRef.set({ ...base, status: 'new', visitId: visit.id, leadId: lead.id, clientId: client.id }, { merge: true });
+    booked = { visit: true, date: data.date, time };
+  } else {
+    // No booking yet: still keep the enquiry, and make the lead as soon as there is a number to call back.
+    let leadId = chat && chat.leadId;
+    if (!leadId && phone && name) {
+      const lead = await db.collection(`companies/${cid}/leads`).add({
+        name, phone, address, what, source, status: 'open', nextStep: 'Call back', nextDate: addDays(1), createdAt: Date.now(), [idKey]: chatId,
+      });
+      leadId = lead.id;
+      booked = { visit: false };
+    }
+    await chatRef.set({ ...base, status: (chat && chat.status) || 'new', ...(leadId ? { leadId } : {}) }, { merge: true });
+  }
+  return { reply: text, booked };
+}
+
+// Two limits, so a stranger can't run up a bill: per conversation, and per company per day.
+function shapeMessages(messages) {
+  const msgs = (Array.isArray(messages) ? messages : []).slice(-20)
+    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 800) }))
+    .filter((m) => m.content.trim());
+  while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+  return msgs;
+}
+async function dayBudget(cid) {
+  const day = new Date().toISOString().slice(0, 10);
+  const cRef = admin.firestore().doc(`askUsage/${cid}_${day}`);
+  return admin.firestore().runTransaction(async (tx) => { const d = await tx.get(cRef); const n = ((d.exists && d.data().n) || 0) + 1; tx.set(cRef, { n, cid, day }); return n; });
+}
+
 exports.askChat = onCall({ region: 'europe-west1', secrets: [ANTHROPIC_KEY], timeoutSeconds: 60 }, async (req) => {
   const { token, chatId, messages } = req.data || {};
   if (!/^[a-f0-9]{48}$/.test(String(token || ''))) throw new HttpsError('invalid-argument', 'Bad link.');
@@ -217,89 +313,15 @@ exports.askChat = onCall({ region: 'europe-west1', secrets: [ANTHROPIC_KEY], tim
   if (!comp.features || !comp.features.aiask) throw new HttpsError('failed-precondition', 'This assistant is switched off.');
   const set = (await db.doc(`companies/${cid}/askSettings/main`).get()).data() || {};
 
-  // Two limits, so a stranger can't run up a bill: per conversation, and per company per day.
-  const msgs = (Array.isArray(messages) ? messages : []).slice(-20)
-    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 800) }))
-    .filter((m) => m.content.trim());
-  while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+  const msgs = shapeMessages(messages);
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw new HttpsError('invalid-argument', 'Say something first.');
   if (msgs.filter((m) => m.role === 'user').length > 40) throw new HttpsError('resource-exhausted', 'This chat is long. Please call us instead.');
-  const day = new Date().toISOString().slice(0, 10);
-  const cRef = db.doc(`askUsage/${cid}_${day}`);
-  const used = await db.runTransaction(async (tx) => { const d = await tx.get(cRef); const n = ((d.exists && d.data().n) || 0) + 1; tx.set(cRef, { n, cid, day }); return n; });
-  if (used > 400) return { reply: 'We’ve had a lot of questions today. Please call or WhatsApp us and we’ll help you straight away.' };
+  if (await dayBudget(cid) > 400) return { reply: 'We’ve had a lot of questions today. Please call or WhatsApp us and we’ll help you straight away.' };
 
   const chatRef = db.doc(`askChats/${chatId}`);
   const chat = (await chatRef.get()).data() || null;
   if (chat && chat.cid !== cid) throw new HttpsError('permission-denied', 'Bad chat.');
-  const alreadyBooked = !!(chat && chat.visitId);
-  const slots = set.bookVisits !== false && !alreadyBooked ? await freeDays(cid, set) : [];
-
-  const system = 'You are the assistant on the public page of "' + clean(comp.name, 60) + '", a company in Malta. You are talking to someone who may become a customer.\n'
-    + 'WHAT THE COMPANY TOLD YOU ABOUT ITSELF (your only source about them):\n"""\n' + clean(set.about, 1500) + '\n"""\n'
-    + (set.areas ? 'Areas they cover: ' + clean(set.areas, 200) + '\n' : '')
-    + (set.hours ? 'Opening hours: ' + clean(set.hours, 120) + '\n' : '')
-    + (set.phone ? 'Their phone: ' + clean(set.phone, 40) + '\n' : '')
-    + 'Rules:\n'
-    + '- Warm, short, plain language. Two or three sentences at a time. No emojis. Reply in the person’s language (English or Maltese).\n'
-    + '- Answer ONLY from what the company told you. Never invent prices, timescales, products or promises. If you do not know, say so plainly and offer to have someone call them.\n'
-    + '- Your job is to get their name, phone number and what they need. Ask for one thing at a time, naturally, not as a form.\n'
-    + (slots.length
-      ? '- They can book a free site visit. Days you may offer: ' + slots.map((d) => DAYNAME[isoDay(d)] + ' ' + d).join(', ') + '. Times you may offer: ' + clean(set.slotTimes || 'Morning, Afternoon', 120) + '. Only offer these.\n'
-      : '- You cannot book anything in this chat; offer to have someone call them instead.\n')
-    + '- You are an assistant, not a person; say so if asked. Never ask for card numbers, ID card numbers or passwords.\n'
-    + '- Decline anything not about this company and its work.\n'
-    + 'ALWAYS end your reply with one line of JSON on its own, no code fences:\n'
-    + '[[DATA]]{"name":"","phone":"","what":"","address":"","date":"","time":"","book":false}\n'
-    + 'Fill only what the person actually told you; leave the rest empty. "date" must be one of the days offered, in YYYY-MM-DD. '
-    + 'Set "book" to true only when they have agreed to a visit AND you have their name, phone and a date from the list.';
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': ANTHROPIC_KEY.value(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 600, system, messages: msgs }),
-  });
-  const out = await res.json().catch(() => ({}));
-  if (!res.ok) { console.error('anthropic ask', res.status, out); throw new HttpsError('internal', 'The assistant isn’t available right now.'); }
-  let text = (out.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
-  let data = {};
-  const cut = text.lastIndexOf('[[DATA]]');
-  if (cut >= 0) { try { data = JSON.parse(text.slice(cut + 8).trim()) || {}; } catch (e) { data = {}; } text = text.slice(0, cut).trim(); }
-  if (!text) text = 'Sorry, could you say that again?';
-
-  const name = clean(data.name, 80); const phone = clean(data.phone, 40); const what = clean(data.what, 300); const address = clean(data.address, 200);
-  const nowMsgs = [...msgs.map((m) => ({ role: m.role, text: m.content, at: Date.now() })), { role: 'assistant', text, at: Date.now() }].slice(-40);
-  const base = { cid, token, at: (chat && chat.at) || Date.now(), name, phone, what, address, messages: nowMsgs, updatedAt: Date.now() };
-
-  // Book the visit only when the model says so and we really have what we need.
-  let booked = null;
-  const wantsBook = !!data.book && !alreadyBooked && slots.includes(String(data.date || '')) && phone && name;
-  if (wantsBook) {
-    const time = clean(data.time, 40);
-    const client = await db.collection(`companies/${cid}/clients`).add({ name, phone, address, source: 'Assistant', createdAt: Date.now() });
-    const visit = await db.collection(`companies/${cid}/visits`).add({
-      clientId: client.id, clientName: name, phone, address, what: what || 'Enquiry from the assistant',
-      date: data.date, time, status: 'booked', note: '', files: [], createdAt: Date.now(), source: 'Assistant', askChatId: chatId,
-    });
-    const lead = await db.collection(`companies/${cid}/leads`).add({
-      name, phone, address, what, source: 'Assistant', status: 'visit', clientId: client.id,
-      nextStep: 'Site visit booked', nextDate: data.date, createdAt: Date.now(), askChatId: chatId,
-    });
-    await chatRef.set({ ...base, status: 'new', visitId: visit.id, leadId: lead.id, clientId: client.id }, { merge: true });
-    booked = { visit: true, date: data.date, time };
-  } else {
-    // No booking yet: still keep the enquiry, and make the lead as soon as there is a number to call back.
-    let leadId = chat && chat.leadId;
-    if (!leadId && phone && name) {
-      const lead = await db.collection(`companies/${cid}/leads`).add({
-        name, phone, address, what, source: 'Assistant', status: 'open', nextStep: 'Call back', nextDate: addDays(1), createdAt: Date.now(), askChatId: chatId,
-      });
-      leadId = lead.id;
-      booked = { visit: false };
-    }
-    await chatRef.set({ ...base, status: (chat && chat.status) || 'new', ...(leadId ? { leadId } : {}) }, { merge: true });
-  }
-  return { reply: text, booked };
+  return runAssistant({ db, cid, comp, set, msgs, chatRef, chat, chatId, source: 'Assistant', idKey: 'askChatId', where: 'page', extra: { token } });
 });
 
 // Phone alert to Gary when a help request arrives or the person writes again. No personal details are sent.
@@ -671,3 +693,171 @@ exports.stripeWebhook = onRequest({ region: 'europe-west1', secrets: [STRIPE_SEC
     res.json({ received: true });
   } catch (e) { console.error('stripeWebhook', e); res.status(500).send('Error'); }
 });
+
+// ---------------------------------------------------------------------------
+// Missed calls pack. The company gets a SiteToFit number. A call to it rings their own phone first, exactly as
+// before. Only if nobody answers does the caller get a text, and the assistant carries on by message.
+// Everything here is inert until a Twilio account is connected and the two secrets are set.
+// ---------------------------------------------------------------------------
+const TWILIO_SID = defineSecret('TWILIO_SID');
+const TWILIO_TOKEN = defineSecret('TWILIO_TOKEN');
+const crypto = require('crypto');
+
+const e164 = (p) => { let d = String(p || '').replace(/[^\d+]/g, ''); if (!d.startsWith('+')) d = (d.length === 8 ? '+356' : '+') + d; return d; };
+const xml = (body) => `<?xml version="1.0" encoding="UTF-8"?><Response>${body}</Response>`;
+const xmlEsc = (t) => String(t || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+const twiml = (res, body) => { res.set('Content-Type', 'text/xml').status(200).send(xml(body)); };
+
+// Twilio signs every request with the account's auth token. Without a valid signature we answer nothing:
+// these are public URLs, and the whole pack runs on the company's money.
+function fromTwilio(req, name) {
+  const sig = req.get('X-Twilio-Signature');
+  if (!sig) return false;
+  const body = req.body || {};
+  const tail = Object.keys(body).sort().map((k) => k + body[k]).join('');
+  const host = req.get('x-forwarded-host') || req.hostname;
+  const path = req.originalUrl || '/';
+  // Cloud Run rewrites the path, so try the shapes Twilio may have signed rather than guessing one.
+  const urls = [
+    `https://${host}${path}`,
+    `https://${host}/${name}`,
+    `https://${host}${path === '/' ? '/' + name : path}`,
+    `https://europe-west1-${process.env.GCLOUD_PROJECT || 'sitetofit'}.cloudfunctions.net/${name}`,
+  ];
+  return urls.some((u) => {
+    const mine = crypto.createHmac('sha1', TWILIO_TOKEN.value()).update(Buffer.from(u + tail, 'utf-8')).digest('base64');
+    try { return crypto.timingSafeEqual(Buffer.from(mine), Buffer.from(sig)); } catch (e) { return false; }
+  });
+}
+
+// Which company owns the number that was dialled. The number lives on the company record, set by us.
+async function companyForNumber(num) {
+  const db = admin.firestore();
+  const want = e164(num);
+  const snap = await db.collection('companies').where('callNumber', '==', want).limit(1).get();
+  if (snap.empty) return null;
+  const comp = { id: snap.docs[0].id, ...snap.docs[0].data() };
+  if (!comp.features || !comp.features.aicall) return null;
+  const set = (await db.doc(`companies/${comp.id}/callSettings/main`).get()).data() || {};
+  if (set.active === false) return null;
+  return { comp, set };
+}
+
+const openNow = (hours) => {
+  // Deliberately simple: the company writes their hours in their own words, so we only use this to pick which
+  // of their two messages goes out. Monday to Friday, 8 to 5, Malta time, unless they say otherwise.
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Malta' }));
+  const h = now.getHours(); const d = now.getDay();
+  const m = String(hours || '').match(/(\d{1,2})\s*(?:am|:00)?\s*(?:to|-|–)\s*(\d{1,2})\s*(am|pm)?/i);
+  let from = 8; let to = 17;
+  if (m) { from = Number(m[1]); to = Number(m[2]); if (to <= 12 && (m[3] || '').toLowerCase() !== 'am') to += 12; }
+  return d >= 1 && d <= 5 && h >= from && h < to;
+};
+
+// A call comes in: ring the company's own phone first. Nothing is sent yet.
+exports.callIn = onRequest({ region: 'europe-west1', secrets: [TWILIO_TOKEN], cors: false }, async (req, res) => {
+  try {
+    if (!fromTwilio(req, 'callIn')) return res.status(403).send('no');
+    const found = await companyForNumber(req.body.To);
+    if (!found) return twiml(res, '<Say voice="alice">Sorry, this number is not in service.</Say>');
+    const { set } = found;
+    const to = e164(set.forwardTo);
+    if (!to || to.length < 8) return twiml(res, `<Say voice="alice">Sorry, we cannot take your call right now.</Say>`);
+    const secs = Math.max(10, Math.min(45, Number(set.ringSeconds) || 20));
+    // callerId stays the real caller's number, so the company sees who is ringing on their own phone.
+    twiml(res, `<Dial timeout="${secs}" action="/callDone" method="POST" callerId="${xmlEsc(e164(req.body.From))}"><Number>${xmlEsc(to)}</Number></Dial>`);
+  } catch (e) { console.error('callIn', e); twiml(res, '<Say voice="alice">Sorry, something went wrong.</Say>'); }
+});
+
+// The call is over. If nobody picked it up, text the caller — once — and open the thread.
+exports.callDone = onRequest({ region: 'europe-west1', secrets: [TWILIO_SID, TWILIO_TOKEN, ANTHROPIC_KEY], cors: false }, async (req, res) => {
+  try {
+    if (!fromTwilio(req, 'callDone')) return res.status(403).send('no');
+    const status = String(req.body.DialCallStatus || '');
+    if (status === 'completed') return twiml(res, '');
+    const found = await companyForNumber(req.body.To);
+    if (!found) return twiml(res, '');
+    const { comp, set } = found;
+    const caller = e164(req.body.From);
+    if (!caller || caller.length < 8) return twiml(res, '');
+
+    const db = admin.firestore();
+    const chatId = crypto.createHash('sha256').update(comp.id + ':' + caller).digest('hex').slice(0, 32);
+    const ref = db.doc(`callChats/${chatId}`);
+    const chat = (await ref.get()).data() || null;
+    // One text per call, and never two within ten minutes however many times they redial.
+    if (chat && Date.now() - (chat.textedAt || 0) < 10 * 60 * 1000) return twiml(res, '');
+
+    const know = (await db.doc(`companies/${comp.id}/askSettings/main`).get()).data() || {};
+    const text = clean(openNow(know.hours) ? set.text : (set.afterHoursText || set.text), 320)
+      || 'Sorry we missed your call. What can we help you with?';
+    await sendText(comp, set, caller, text);
+    await ref.set({
+      cid: comp.id, phone: caller, at: (chat && chat.at) || Date.now(), textedAt: Date.now(), replied: !!(chat && chat.replied),
+      status: (chat && chat.status) || 'new', name: (chat && chat.name) || '', what: (chat && chat.what) || '',
+      messages: [...((chat && chat.messages) || []), { role: 'assistant', text, at: Date.now() }].slice(-40), updatedAt: Date.now(),
+    }, { merge: true });
+    if (set.officeAlert !== false) await officeMissedCall(comp, caller);
+    twiml(res, '');
+  } catch (e) { console.error('callDone', e); twiml(res, ''); }
+});
+
+// They replied to the text. The same assistant as the "Ask us" page answers, and books if it can.
+exports.smsIn = onRequest({ region: 'europe-west1', secrets: [TWILIO_SID, TWILIO_TOKEN, ANTHROPIC_KEY], cors: false }, async (req, res) => {
+  try {
+    if (!fromTwilio(req, 'smsIn')) return res.status(403).send('no');
+    const found = await companyForNumber(String(req.body.To || '').replace(/^whatsapp:/, ''));
+    if (!found) return twiml(res, '');
+    const { comp, set } = found;
+    const caller = e164(String(req.body.From || '').replace(/^whatsapp:/, ''));
+    const said = String(req.body.Body || '').slice(0, 800).trim();
+    if (!said) return twiml(res, '');
+
+    const db = admin.firestore();
+    const chatId = crypto.createHash('sha256').update(comp.id + ':' + caller).digest('hex').slice(0, 32);
+    const ref = db.doc(`callChats/${chatId}`);
+    const chat = (await ref.get()).data() || null;
+    const history = [...((chat && chat.messages) || []), { role: 'user', text: said }];
+    const msgs = shapeMessages(history);
+    if (msgs.filter((m) => m.role === 'user').length > 25) {
+      return twiml(res, `<Message>${xmlEsc('Easier if we talk — give us a ring on ' + clean((comp.contact || {}).phone, 40) + ' and we’ll sort it.')}</Message>`);
+    }
+    if (await dayBudget(comp.id) > 400) return twiml(res, '');
+
+    const know = (await db.doc(`companies/${comp.id}/askSettings/main`).get()).data() || {};
+    const out = await runAssistant({
+      db, cid: comp.id, comp, set: know, msgs, chatRef: ref, chat, chatId,
+      source: 'Missed call', idKey: 'callChatId', where: 'text', knownPhone: caller,
+      extra: { phone: caller, replied: true, textedAt: (chat && chat.textedAt) || Date.now() },
+    });
+    twiml(res, `<Message>${xmlEsc(out.reply)}</Message>`);
+  } catch (e) { console.error('smsIn', e); twiml(res, ''); }
+});
+
+// Sending a message out (used for the text-back; the replies go back down the webhook as TwiML).
+async function sendText(comp, set, to, body) {
+  const wa = !!set.byWhatsApp;
+  const from = (wa ? 'whatsapp:' : '') + e164(comp.callNumber);
+  const form = new URLSearchParams({ From: from, To: (wa ? 'whatsapp:' : '') + to, Body: body });
+  const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID.value()}/Messages.json`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + Buffer.from(TWILIO_SID.value() + ':' + TWILIO_TOKEN.value()).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form,
+  });
+  if (!r.ok) console.error('twilio send', r.status, await r.text().catch(() => ''));
+  return r.ok;
+}
+
+// A quiet nudge to the office that a call was missed, so somebody can ring back even if the text goes unanswered.
+async function officeMissedCall(comp, caller) {
+  try {
+    const to = companyInbox(comp);
+    if (!to) return;
+    await resend({
+      from: 'SiteToFit <alerts@siteto.fit>', to: [to],
+      subject: 'Missed call from ' + clean(caller, 40),
+      text: 'Somebody rang ' + clean(comp.name, 60) + ' on your SiteToFit number and nobody could get to it.\n\nTheir number: ' + clean(caller, 40)
+        + '\n\nThey have been texted already. Open SiteToFit and tap "Missed calls" to see what they say.\n\n' + SITE + '/app/',
+    });
+  } catch (e) { console.error('missed call alert', e); }
+}

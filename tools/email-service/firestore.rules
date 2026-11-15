@@ -165,6 +165,13 @@ service cloud.firestore {
       allow update: if signedIn() && (isAdmin() || manager(resource.data.cid)) && onlyChanging(['status']);
       allow create, delete: if false;
     }
+    // Missed calls pack: the text-back thread after a missed call. Nobody writes these from the browser —
+    // they arrive from the phone network and the server writes them with the admin SDK.
+    match /callChats/{id} {
+      allow read: if signedIn() && (isAdmin() || manager(resource.data.cid));
+      allow update: if signedIn() && (isAdmin() || manager(resource.data.cid)) && onlyChanging(['status']);
+      allow create, delete: if false;
+    }
     // How many questions a company's assistant answered today, so one page can't run up a bill. Server only.
     match /askUsage/{id} {
       allow read, write: if false;
@@ -321,6 +328,8 @@ service cloud.firestore {
       match /clientAppSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       // ---- "Ask us" pack: what the assistant is told to say ----
       match /askSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
+      // ---- Missed calls pack: the forwarding number, the wording and the hours ----
+      match /callSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       // ---- POS pack (owner and office). Card payments are marked paid by the payment service. ----
       match /posSettings/{doc} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
