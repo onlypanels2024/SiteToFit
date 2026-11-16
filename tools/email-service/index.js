@@ -215,15 +215,21 @@ async function runAssistant(o) {
   const alreadyBooked = !!(chat && chat.visitId);
   const slots = set.bookVisits !== false && !alreadyBooked ? await freeDays(cid, set) : [];
   const byText = o.where === 'text';
+  const byVoice = o.where === 'voice';
 
   const system = 'You are the assistant for "' + clean(comp.name, 60) + '", a company in Malta. You are talking to someone who may become a customer'
-    + (byText ? ', by text message, because they rang and nobody could get to the phone.\n' : ' on the company’s public page.\n')
+    + (byVoice ? ' on the telephone. You answered because nobody at the company could get to the phone.\n'
+      : byText ? ', by text message, because they rang and nobody could get to the phone.\n' : ' on the company’s public page.\n')
     + 'WHAT THE COMPANY TOLD YOU ABOUT ITSELF (your only source about them):\n"""\n' + clean(set.about, 1500) + '\n"""\n'
     + (set.areas ? 'Areas they cover: ' + clean(set.areas, 200) + '\n' : '')
     + (set.hours ? 'Opening hours: ' + clean(set.hours, 120) + '\n' : '')
     + (set.phone ? 'Their phone: ' + clean(set.phone, 40) + '\n' : '')
     + 'Rules:\n'
-    + (byText
+    + (byVoice
+      ? '- You are SPEAKING, and your words are read out by a machine. One or two short sentences, never more. No lists, no bullet points, no symbols, no abbreviations, no emojis. Write numbers as words where it sounds natural. Plain spoken English.\n'
+        + '- What you hear has been typed out by speech recognition and may be wrong. If something looks garbled, ask them to say it again rather than guessing.\n'
+        + '- Ask one question at a time and wait. Get what they want, their name, and a number to ring back on. End your turn with a question unless the call is finished.\n'
+      : byText
       ? '- This is SMS. Keep every reply under 300 characters, one or two sentences. No emojis, no links unless the company gave you one. Reply in the person’s language (English or Maltese).\n'
         + '- They already rang, so they want something. Find out what, and get their name. You already have their number.\n'
       : '- Warm, short, plain language. Two or three sentences at a time. No emojis. Reply in the person’s language (English or Maltese).\n'
@@ -242,7 +248,7 @@ async function runAssistant(o) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': ANTHROPIC_KEY.value(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: byText ? 300 : 600, system, messages: msgs }),
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: byVoice ? 200 : byText ? 300 : 600, system, messages: msgs }),
   });
   const out = await res.json().catch(() => ({}));
   if (!res.ok) { console.error('anthropic assistant', res.status, out); throw new HttpsError('internal', 'The assistant isn’t available right now.'); }
@@ -253,7 +259,12 @@ async function runAssistant(o) {
   if (!text) text = 'Sorry, could you say that again?';
 
   const name = clean(data.name, 80); const phone = clean(o.knownPhone || data.phone, 40); const what = clean(data.what, 300); const address = clean(data.address, 200);
-  const nowMsgs = [...msgs.map((m) => ({ role: m.role, text: m.content, at: Date.now() })), { role: 'assistant', text, at: Date.now() }].slice(-40);
+  // What gets saved for the office. On the phone and by text the first line is ours, and shapeMessages drops
+  // any leading assistant message before sending it to the model — so save the real history, not the shaped one.
+  const nowMsgs = (o.history
+    ? [...o.history.map((m) => ({ role: m.role, text: m.text, at: m.at || Date.now() }))]
+    : msgs.map((m) => ({ role: m.role, text: m.content, at: Date.now() })))
+    .concat([{ role: 'assistant', text, at: Date.now() }]).slice(-40);
   const base = { cid, at: (chat && chat.at) || Date.now(), name, phone, what, address, messages: nowMsgs, updatedAt: Date.now(), ...(o.extra || {}) };
 
   // Book the visit only when the model says so and we really have what we need.
@@ -737,10 +748,15 @@ async function companyForNumber(num) {
   const snap = await db.collection('companies').where('callNumber', '==', want).limit(1).get();
   if (snap.empty) return null;
   const comp = { id: snap.docs[0].id, ...snap.docs[0].data() };
-  if (!comp.features || !comp.features.aicall) return null;
-  const set = (await db.doc(`companies/${comp.id}/callSettings/main`).get()).data() || {};
-  if (set.active === false) return null;
-  return { comp, set };
+  const f = comp.features || {};
+  const [cs, vs] = await Promise.all([
+    db.doc(`companies/${comp.id}/callSettings/main`).get(),
+    db.doc(`companies/${comp.id}/voiceSettings/main`).get(),
+  ]);
+  const set = cs.data() || {};
+  const vset = vs.data() || {};
+  // Two packs can share one number. Each is live only if it is both bought and switched on.
+  return { comp, set, vset, textLive: !!f.aicall && set.active !== false, voiceLive: !!f.aivoice && vset.active === true };
 }
 
 const openNow = (hours) => {
@@ -759,11 +775,16 @@ exports.callIn = onRequest({ region: 'europe-west1', secrets: [TWILIO_TOKEN], co
   try {
     if (!fromTwilio(req, 'callIn')) return res.status(403).send('no');
     const found = await companyForNumber(req.body.To);
-    if (!found) return twiml(res, '<Say voice="alice">Sorry, this number is not in service.</Say>');
-    const { set } = found;
-    const to = e164(set.forwardTo);
-    if (!to || to.length < 8) return twiml(res, `<Say voice="alice">Sorry, we cannot take your call right now.</Say>`);
-    const secs = Math.max(10, Math.min(45, Number(set.ringSeconds) || 20));
+    if (!found || (!found.textLive && !found.voiceLive)) return twiml(res, '<Say voice="alice">Sorry, this number is not in service.</Say>');
+    const { set, vset, voiceLive } = found;
+    // The company can ask the assistant to answer every call, without their own phone ringing at all.
+    if (voiceLive && vset.ringFirst === false) return twiml(res, '<Redirect method="POST">/voiceStart</Redirect>');
+    const to = e164(set.forwardTo || vset.forwardTo);
+    if (!to || to.length < 8) {
+      if (voiceLive) return twiml(res, '<Redirect method="POST">/voiceStart</Redirect>');
+      return twiml(res, '<Say voice="alice">Sorry, we cannot take your call right now.</Say>');
+    }
+    const secs = Math.max(10, Math.min(45, Number((voiceLive ? vset.ringSeconds : set.ringSeconds)) || 20));
     // callerId stays the real caller's number, so the company sees who is ringing on their own phone.
     twiml(res, `<Dial timeout="${secs}" action="/callDone" method="POST" callerId="${xmlEsc(e164(req.body.From))}"><Number>${xmlEsc(to)}</Number></Dial>`);
   } catch (e) { console.error('callIn', e); twiml(res, '<Say voice="alice">Sorry, something went wrong.</Say>'); }
@@ -778,6 +799,9 @@ exports.callDone = onRequest({ region: 'europe-west1', secrets: [TWILIO_SID, TWI
     const found = await companyForNumber(req.body.To);
     if (!found) return twiml(res, '');
     const { comp, set } = found;
+    // If they also bought the voice pack, the assistant picks the call up rather than letting it die.
+    if (found.voiceLive) return twiml(res, '<Redirect method="POST">/voiceStart</Redirect>');
+    if (!found.textLive) return twiml(res, '');
     const caller = e164(req.body.From);
     if (!caller || caller.length < 8) return twiml(res, '');
 
@@ -807,7 +831,7 @@ exports.smsIn = onRequest({ region: 'europe-west1', secrets: [TWILIO_SID, TWILIO
   try {
     if (!fromTwilio(req, 'smsIn')) return res.status(403).send('no');
     const found = await companyForNumber(String(req.body.To || '').replace(/^whatsapp:/, ''));
-    if (!found) return twiml(res, '');
+    if (!found || !found.textLive) return twiml(res, '');
     const { comp, set } = found;
     const caller = e164(String(req.body.From || '').replace(/^whatsapp:/, ''));
     const said = String(req.body.Body || '').slice(0, 800).trim();
@@ -827,7 +851,7 @@ exports.smsIn = onRequest({ region: 'europe-west1', secrets: [TWILIO_SID, TWILIO
     const know = (await db.doc(`companies/${comp.id}/askSettings/main`).get()).data() || {};
     const out = await runAssistant({
       db, cid: comp.id, comp, set: know, msgs, chatRef: ref, chat, chatId,
-      source: 'Missed call', idKey: 'callChatId', where: 'text', knownPhone: caller,
+      source: 'Missed call', idKey: 'callChatId', where: 'text', knownPhone: caller, history,
       extra: { phone: caller, replied: true, textedAt: (chat && chat.textedAt) || Date.now() },
     });
     twiml(res, `<Message>${xmlEsc(out.reply)}</Message>`);
@@ -860,4 +884,123 @@ async function officeMissedCall(comp, caller) {
         + '\n\nThey have been texted already. Open SiteToFit and tap "Missed calls" to see what they say.\n\n' + SITE + '/app/',
     });
   } catch (e) { console.error('missed call alert', e); }
+}
+
+// ---------------------------------------------------------------------------
+// Answered calls pack. The assistant picks the phone up and talks: it hears what the caller says, answers from
+// what the company wrote about itself, and can book a site visit. The call is written out word for word for the
+// office. No recording is kept — only the words.
+// ---------------------------------------------------------------------------
+const VOICES = ['Polly.Amy', 'Polly.Brian', 'Polly.Emma', 'Polly.Joanna', 'Polly.Matthew'];
+const sayVoice = (vset) => (VOICES.includes(vset.voice) ? vset.voice : 'Polly.Amy');
+const voiceDoc = (cid, sid) => admin.firestore().doc(`callChats/${crypto.createHash('sha256').update(cid + ':v:' + sid).digest('hex').slice(0, 32)}`);
+// Twilio hears the caller and sends us the words. We give it back something to say, then listen again.
+const listen = (vset, line) => `<Gather input="speech" action="/voiceTurn" method="POST" speechTimeout="auto" speechModel="phone_call" language="en-GB" actionOnEmptyResult="true">`
+  + `<Say voice="${sayVoice(vset)}">${xmlEsc(line)}</Say></Gather>`;
+
+// The assistant answers the phone and says its first line.
+exports.voiceStart = onRequest({ region: 'europe-west1', secrets: [TWILIO_TOKEN], cors: false }, async (req, res) => {
+  try {
+    if (!fromTwilio(req, 'voiceStart')) return res.status(403).send('no');
+    const found = await companyForNumber(req.body.To);
+    if (!found || !found.voiceLive) return twiml(res, '<Hangup/>');
+    const { comp, vset } = found;
+    const sid = String(req.body.CallSid || '').slice(0, 64);
+    if (!sid) return twiml(res, '<Hangup/>');
+    await voiceDoc(comp.id, sid).set({
+      cid: comp.id, via: 'voice', callSid: sid, phone: e164(req.body.From || ''), at: Date.now(),
+      status: 'new', name: '', what: '', messages: [], updatedAt: Date.now(),
+    }, { merge: true });
+    const greeting = clean(vset.greeting, 320) || 'Hello, thanks for calling. What can I do for you?';
+    await voiceDoc(comp.id, sid).update({ messages: [{ role: 'assistant', text: greeting, at: Date.now() }] });
+    twiml(res, listen(vset, greeting));
+  } catch (e) { console.error('voiceStart', e); twiml(res, '<Say voice="alice">Sorry, something went wrong.</Say><Hangup/>'); }
+});
+
+// One turn of the conversation: what they just said, and what the assistant says back.
+exports.voiceTurn = onRequest({ region: 'europe-west1', secrets: [TWILIO_TOKEN, ANTHROPIC_KEY], cors: false, timeoutSeconds: 30 }, async (req, res) => {
+  try {
+    if (!fromTwilio(req, 'voiceTurn')) return res.status(403).send('no');
+    const found = await companyForNumber(req.body.To);
+    if (!found || !found.voiceLive) return twiml(res, '<Hangup/>');
+    const { comp, vset } = found;
+    const sid = String(req.body.CallSid || '').slice(0, 64);
+    const ref = voiceDoc(comp.id, sid);
+    const chat = (await ref.get()).data() || null;
+    if (!chat) return twiml(res, '<Hangup/>');
+
+    const said = String(req.body.SpeechResult || '').slice(0, 800).trim();
+    // Silence. Ask once, then let them go rather than keeping a stranger on a loop.
+    if (!said) {
+      const quiet = (chat.quiet || 0) + 1;
+      await ref.update({ quiet });
+      if (quiet >= 2) return twiml(res, `<Say voice="${sayVoice(vset)}">I can’t hear you, sorry. Do give us a ring again. Goodbye.</Say><Hangup/>`);
+      return twiml(res, listen(vset, 'Sorry, I didn’t catch that. Could you say it again?'));
+    }
+
+    const turns = (chat.messages || []).filter((m) => m.role === 'user').length;
+    const max = Math.max(4, Math.min(20, Number(vset.maxTurns) || 12));
+    if (turns >= max) {
+      return twiml(res, `<Say voice="${sayVoice(vset)}">I’ve taken all that down and someone will call you back. Thanks for ringing. Goodbye.</Say><Hangup/>`);
+    }
+    if (await dayBudget(comp.id) > 400) {
+      return twiml(res, `<Say voice="${sayVoice(vset)}">Sorry, I can’t take this just now. Please try again shortly. Goodbye.</Say><Hangup/>`);
+    }
+
+    const db = admin.firestore();
+    const know = (await db.doc(`companies/${comp.id}/askSettings/main`).get()).data() || {};
+    const history = [...(chat.messages || []), { role: 'user', text: said, at: Date.now() }];
+    const msgs = shapeMessages(history);
+    const out = await runAssistant({
+      db, cid: comp.id, comp, set: { ...know, bookVisits: vset.bookVisits !== false }, msgs, chatRef: ref, chat,
+      chatId: ref.id, source: 'Phone call', idKey: 'callChatId', where: 'voice',
+      knownPhone: chat.phone || '', extra: { via: 'voice', callSid: sid, quiet: 0 }, history,
+    });
+    twiml(res, listen(vset, out.reply));
+  } catch (e) {
+    console.error('voiceTurn', e);
+    twiml(res, '<Say voice="alice">Sorry, I’m having trouble. Please call again. Goodbye.</Say><Hangup/>');
+  }
+});
+
+// The call is over: note how long it took, tell the office, and — if the assistant got nowhere and they also
+// bought the text pack — send the text after all, so the caller still has a way back in.
+exports.voiceEnd = onRequest({ region: 'europe-west1', secrets: [TWILIO_SID, TWILIO_TOKEN], cors: false }, async (req, res) => {
+  try {
+    if (!fromTwilio(req, 'voiceEnd')) return res.status(403).send('no');
+    const found = await companyForNumber(req.body.To);
+    if (!found) return res.status(200).send('');
+    const { comp, set, vset } = found;
+    const sid = String(req.body.CallSid || '').slice(0, 64);
+    const ref = voiceDoc(comp.id, sid);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(200).send('');
+    const chat = snap.data();
+    const seconds = Math.max(0, Number(req.body.CallDuration || 0));
+    await ref.update({ seconds, endedAt: Date.now() });
+
+    const gotNothing = !chat.leadId && !chat.visitId;
+    if (gotNothing && found.textLive && chat.phone) {
+      const text = clean(set.text, 320) || 'Sorry we couldn’t help you properly just now. What can we do for you? Reply here.';
+      await sendText(comp, set, chat.phone, text);
+      await ref.update({ textedAt: Date.now(), messages: [...(chat.messages || []), { role: 'assistant', text, at: Date.now() }].slice(-40) });
+    }
+    if (vset.officeAlert !== false) await officeAnsweredCall(comp, chat, seconds);
+    res.status(200).send('');
+  } catch (e) { console.error('voiceEnd', e); res.status(200).send(''); }
+});
+
+async function officeAnsweredCall(comp, chat, seconds) {
+  try {
+    const to = companyInbox(comp);
+    if (!to) return;
+    const said = (chat.messages || []).map((m) => (m.role === 'user' ? 'Them: ' : 'Assistant: ') + m.text).join('\n');
+    const outcome = chat.visitId ? 'A site visit was booked.' : chat.leadId ? 'A lead was taken; they need a call back.' : 'Nothing was taken — worth a call back.';
+    await resend({
+      from: 'SiteToFit <alerts@siteto.fit>', to: [to],
+      subject: 'Your assistant answered a call' + (chat.name ? ' from ' + clean(chat.name, 60) : ''),
+      text: `Somebody rang ${clean(comp.name, 60)} and nobody could get to it, so your assistant took the call.\n\n`
+        + `Their number: ${clean(chat.phone, 40) || 'withheld'}\nHow long: ${seconds} seconds\n${outcome}\n\nWhat was said:\n${said}\n\n${SITE}/app/`,
+    });
+  } catch (e) { console.error('answered call alert', e); }
 }

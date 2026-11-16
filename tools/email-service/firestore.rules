@@ -330,6 +330,8 @@ service cloud.firestore {
       match /askSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       // ---- Missed calls pack: the forwarding number, the wording and the hours ----
       match /callSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
+      // ---- Answered calls pack: the voice, what it says first, and whether it may book ----
+      match /voiceSettings/{doc} { allow read, write: if isAdmin() || manager(cid); }
       // ---- POS pack (owner and office). Card payments are marked paid by the payment service. ----
       match /posSettings/{doc} {
         allow read: if isAdmin() || (inCompany(cid) && role() in ['owner', 'office', 'sales']);
